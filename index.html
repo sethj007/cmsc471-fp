@@ -26,7 +26,8 @@
     <!-- TABS -->
     <div id="tabbar">
         <div id="tabs">
-            <button class="tab active" data-tab="tree">TREE</button>
+            <button class="tab active" data-tab="intro">INTRO</button>
+            <button class="tab" data-tab="tree">TREE</button>
             <button class="tab" data-tab="map">MAP</button>
             <button class="tab" data-tab="both">BOTH</button>
         </div>
@@ -38,8 +39,137 @@
         <!-- LEFT: visualizations -->
         <div id="vis-panel">
 
+            <!-- Intro view -->
+            <div id="intro-view" class="view active">
+                <div id="intro-scroll">
+
+                    <!-- Hero -->
+                    <div id="intro-hero">
+                        <div id="intro-hero-content">
+                            <div id="intro-eyebrow">H3N2 · 2008 → 2026</div>
+                            <h1 id="intro-title">The Flu Never Stops Evolving</h1>
+                            <p id="intro-tagline">Every year, the H3N2 influenza virus mutates, migrates across
+                                continents, and returns in an altered form. This visualization traces its global journey
+                                — from evolutionary family tree to real-world case counts — across nearly two decades.
+                            </p>
+                            <button class="intro-cta" id="intro-start-btn">Explore the Data →</button>
+                        </div>
+                    </div>
+
+                    <!-- About -->
+                    <div class="intro-section">
+                        <div class="intro-section-inner">
+                            <div class="intro-section-label">ABOUT THIS PROJECT</div>
+                            <h2 class="intro-section-title">What is FluLines?</h2>
+                            <p class="intro-section-body">FluLines is an interactive data visualization exploring the
+                                phylogeography of H3N2 influenza — the dominant seasonal flu subtype responsible for
+                                most severe flu seasons. Phylogeography is the study of how evolutionary history and
+                                geographic spread are intertwined: where a virus mutates, and how those mutations travel
+                                across the world.</p>
+                            <p class="intro-section-body">This project was built to make that invisible process visible.
+                                Using genomic sequence data and global surveillance records, FluLines lets you watch
+                                H3N2 evolve in real time — branch by branch, year by year, country by country.</p>
+                        </div>
+                    </div>
+
+                    <!-- Data -->
+                    <div class="intro-section intro-section-alt">
+                        <div class="intro-section-inner">
+                            <div class="intro-section-label">THE DATA</div>
+                            <h2 class="intro-section-title">Two Datasets, One Story</h2>
+                            <div class="intro-data-cards">
+                                <div class="intro-data-card">
+                                    <div class="intro-data-card-label">NEXTSTRAIN · GISAID</div>
+                                    <h3 class="intro-data-card-title">Phylogenetic Tree</h3>
+                                    <p>1,697 H3N2 hemagglutinin (HA) sequences sampled globally from 2008 to 2026. Each
+                                        sequence is a virus collected from a patient, processed into a timetree showing
+                                        evolutionary relationships and divergence dates.</p>
+                                    <div class="intro-data-stat">1,697 sequences · 18 years</div>
+                                </div>
+                                <div class="intro-data-card">
+                                    <div class="intro-data-card-label">WHO FLUNET</div>
+                                    <h3 class="intro-data-card-title">Global Surveillance</h3>
+                                    <p>Weekly country-level influenza surveillance data from the WHO's FluNet system,
+                                        covering laboratory-confirmed H3N2 detections across 100+ countries from 1997 to
+                                        present.</p>
+                                    <div class="intro-data-stat">100+ countries · weekly reports</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Findings -->
+                    <div class="intro-section">
+                        <div class="intro-section-inner">
+                            <div class="intro-section-label">KEY FINDINGS</div>
+                            <h2 class="intro-section-title">What the Data Reveals</h2>
+                            <div class="intro-findings">
+                                <div class="intro-finding-card">
+                                    <div class="intro-finding-year">2014</div>
+                                    <h3 class="intro-finding-title">The Vaccine Mismatch</h3>
+                                    <p>A rapid antigenic drift in the 3C.2a clade caused the 2014–15 flu vaccine to be
+                                        poorly matched to circulating strains — one of the worst mismatches in decades.
+                                        Case counts surged across North America and Asia.</p>
+                                </div>
+                                <div class="intro-finding-card">
+                                    <div class="intro-finding-year">2017</div>
+                                    <h3 class="intro-finding-title">History Repeats</h3>
+                                    <p>Another mismatch year. The 3C.2a1 sub-clade diverged significantly from the
+                                        vaccine reference strain, producing one of the lowest vaccine effectiveness
+                                        rates ever recorded. Hospitalizations spiked globally.</p>
+                                </div>
+                                <div class="intro-finding-card">
+                                    <div class="intro-finding-year">2020</div>
+                                    <h3 class="intro-finding-title">COVID Killed the Flu</h3>
+                                    <p>Pandemic-era measures — masks, lockdowns, reduced travel — nearly eliminated H3N2
+                                        globally. Reported cases dropped to historic lows. The phylogenetic tree shows
+                                        an evolutionary bottleneck: very few strains survived to 2021.</p>
+                                </div>
+                                <div class="intro-finding-card">
+                                    <div class="intro-finding-year">2022+</div>
+                                    <h3 class="intro-finding-title">The Rebound & New Clades</h3>
+                                    <p>As immunity waned and travel resumed, H3N2 rebounded rapidly under new clade
+                                        designations (2a.1b.2a, 2a.1b.2b). The virus that returned post-pandemic was
+                                        evolutionarily distinct from the one that disappeared in 2020.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CTA -->
+                    <div class="intro-section intro-section-cta">
+                        <div class="intro-section-inner" style="text-align:center;">
+                            <h2 class="intro-section-title">Ready to Explore?</h2>
+                            <p class="intro-section-body">Use the tabs above to switch between the phylogenetic tree,
+                                the global map, or both views simultaneously. The timeline at the bottom controls the
+                                year across all views.</p>
+                            <button class="intro-cta" id="intro-end-btn">Get Started →</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
             <!-- Tree view -->
-            <div id="tree-view" class="view active">
+            <div id="tree-view" class="view">
+                <div id="tree-toolbar">
+                    <span class="toolbar-label">Phylogenetic tree</span>
+                    <div class="toolbar-group">
+                        <span class="toolbar-sublabel">DENSITY</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn active" data-density="tips">All tips</button>
+                            <button class="seg-btn" data-density="density">Density</button>
+                            <button class="seg-btn" data-density="collapsed">Collapsed</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-group">
+                        <span class="toolbar-sublabel">COLOR BY</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn active" data-color="region">Region</button>
+                            <button class="seg-btn" data-color="clade">Clade</button>
+                        </div>
+                    </div>
+                </div>
                 <div id="tree-container">
                     <svg id="tree-axis" style="display:block;"></svg>
                     <div id="tree"></div>
@@ -48,7 +178,19 @@
 
             <!-- Map view -->
             <div id="map-view" class="view">
-                <div id="map"></div>
+                <div id="map-toolbar">
+                    <span class="toolbar-label">H3N2 cases reported</span>
+                    <div class="toolbar-group">
+                        <span class="toolbar-sublabel">VIEW</span>
+                        <div class="segmented-control">
+                            <button class="seg-btn active" data-view="choropleth">Choropleth</button>
+                            <button class="seg-btn" data-view="bubbles">Bubbles</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="map-container">
+                    <div id="map"></div>
+                </div>
             </div>
 
             <!-- Both view -->

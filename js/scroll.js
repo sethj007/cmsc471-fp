@@ -3,8 +3,13 @@ const tabs = document.querySelectorAll(".tab");
 const views = document.querySelectorAll(".view");
 
 const contextTitles = {
+    intro: { title: "Welcome to FluLines", desc: "An interactive exploration of H3N2 influenza evolution and global spread from 2008 to 2026." },
     tree: { title: "The H3N2 Family Tree", desc: "Explore how H3N2 strains evolved and diverged over time. Each branch represents a lineage; each dot a sequenced sample." },
+<<<<<<< HEAD
     map: { title: "Global H3N2 Activity", desc: "See where H3N2 was circulating year by year. Deeper red = more reported cases." },
+=======
+    map:  { title: "Global H3N2 Activity", desc: "See where H3N2 was circulating year by year. Darker blue = more reported cases." },
+>>>>>>> 43746ac7f4d7b0575444237d0b15c1443183c89e
     both: { title: "Evolution Meets Geography", desc: "Watch how evolutionary branching connects to global spread. Both views respond to the timeline below." }
 };
 
@@ -14,7 +19,6 @@ tabs.forEach(tab => {
         tab.classList.add("active");
         const target = tab.dataset.tab;
 
-        // Move tree back to original container before switching
         const treeContainer = document.getElementById("tree-container");
         const treeAxisEl = document.getElementById("tree-axis");
         const treeEl = document.getElementById("tree");
@@ -46,12 +50,10 @@ tabs.forEach(tab => {
                 treeBoth.appendChild(treeAxisEl);
                 treeBoth.appendChild(treeEl);
 
-                // Wait for DOM to settle, then scale
                 requestAnimationFrame(() => {
                     const container = document.getElementById("both-tree-container");
                     const containerWidth = container.clientWidth;
-                    const treeWidth = 2500;
-                    const scale = (containerWidth / treeWidth) * 1.08;
+                    const scale = (containerWidth / 2500) * 1.08;
 
                     treeEl.style.transform = `scale(${scale})`;
                     treeEl.style.transformOrigin = "top left";
@@ -61,7 +63,6 @@ tabs.forEach(tab => {
                     const currentYear = +document.getElementById("yearSlider").value;
                     if (window.updateTree) window.updateTree(currentYear);
                 });
-
             }, 100);
         }
     });
@@ -120,6 +121,19 @@ Object.entries(legendRegions).forEach(([region, color]) => {
     legendContainer.appendChild(item);
 });
 
+// === INTRO CTA BUTTONS ===
+function switchToTree() {
+    tabs.forEach(t => t.classList.remove("active"));
+    document.querySelector(".tab[data-tab='tree']").classList.add("active");
+    views.forEach(v => v.classList.remove("active"));
+    document.getElementById("tree-view").classList.add("active");
+    document.getElementById("context-title").textContent = contextTitles.tree.title;
+    document.getElementById("context-desc").textContent = contextTitles.tree.desc;
+}
+
+document.getElementById("intro-start-btn")?.addEventListener("click", switchToTree);
+document.getElementById("intro-end-btn")?.addEventListener("click", switchToTree);
+
 // === DENSITY / COLLAPSED TOOLBAR ===
 document.querySelectorAll(".seg-btn[data-density]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -129,6 +143,38 @@ document.querySelectorAll(".seg-btn[data-density]").forEach(btn => {
         if (mode === "tips" && window.showAllTipsView) window.showAllTipsView();
         else if (mode === "density" && window.showDensityView) window.showDensityView();
         else if (mode === "collapsed" && window.showCollapsedView) window.showCollapsedView();
+    });
+});
+
+// === COLOR BY TOOLBAR ===
+document.querySelectorAll(".seg-btn[data-color]").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".seg-btn[data-color]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (window.setColorMode) window.setColorMode(btn.dataset.color);
+    });
+});
+
+// === MAP VIEW TOGGLE (Choropleth / Bubbles) ===
+document.querySelectorAll(".seg-btn[data-view]").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".seg-btn[data-view]").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const mode = btn.dataset.view;
+        const year = +document.getElementById("yearSlider").value;
+
+        // Determine which map is active
+        const activeTab = document.querySelector(".tab.active")?.dataset.tab;
+        const containerId = activeTab === "both" ? "map-both" : "map";
+
+        if (!window._mapViewMode) window._mapViewMode = {};
+        window._mapViewMode[containerId] = mode;
+
+        if (mode === "bubbles" && window.showBubbles) {
+            window.showBubbles(containerId, year);
+        } else if (mode === "choropleth" && window.showChoropleth) {
+            window.showChoropleth(containerId, year);
+        }
     });
 });
 
@@ -164,7 +210,6 @@ if (collapseBtn) {
     collapseBtn.addEventListener("click", () => {
         contextPanel.classList.toggle("collapsed");
         collapseBtn.textContent = contextPanel.classList.contains("collapsed") ? "›" : "‹";
-        collapseBtn.style.right = contextPanel.classList.contains("collapsed") ? "0" : "280px";
     });
 }
 
@@ -175,7 +220,12 @@ let playing = false;
 let playInterval = null;
 
 function startPlay() {
+<<<<<<< HEAD
     const baseInterval = 600;
+=======
+    let year = +yearSlider.value;
+    if (year >= 2026) year = 2008;
+>>>>>>> 43746ac7f4d7b0575444237d0b15c1443183c89e
     playInterval = setInterval(() => {
         let year = +yearSlider.value
         if (year >= 2026) {
@@ -184,6 +234,7 @@ function startPlay() {
             playBtn.textContent = "▶";
             return;
         }
+<<<<<<< HEAD
         year++
         yearSlider.value = year
         document.getElementById("yearLabel").textContent
@@ -198,6 +249,9 @@ function startPlay() {
             }
         });
     }, baseInterval / playSpeed);
+=======
+    }, 400 / playSpeed);
+>>>>>>> 43746ac7f4d7b0575444237d0b15c1443183c89e
 }
 
 playBtn.addEventListener("click", () => {

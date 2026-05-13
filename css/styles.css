@@ -548,3 +548,242 @@ html, body {
     fill: #333;
     font-weight: bold;
 }
+
+#map-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0 1rem;
+    height: 36px;
+    background: #fafafa;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+#map-container {
+    flex: 1;
+    overflow: hidden;
+}
+
+#map-container #map {
+    width: 100%;
+    height: 100%;
+}
+
+#tree-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0 1rem;
+    height: 36px;
+    background: #fafafa;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0;
+}
+
+/* === INTRO VIEW === */
+#intro-view {
+    overflow-y: auto !important;
+    display: none;
+    flex-direction: column;
+}
+
+#intro-view.active {
+    display: flex;
+}
+
+#intro-scroll {
+    flex: 1;
+    overflow-y: auto;
+}
+
+#intro-hero {
+    background: #111;
+    color: white;
+    padding: 5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+}
+
+#intro-hero-content {
+    max-width: 700px;
+    text-align: center;
+}
+
+#intro-eyebrow {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #888;
+    margin-bottom: 1rem;
+}
+
+#intro-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1.25rem;
+    color: white;
+}
+
+#intro-tagline {
+    font-size: 1rem;
+    color: #aaa;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+}
+
+.intro-cta {
+    background: white;
+    color: #111;
+    border: none;
+    border-radius: 4px;
+    padding: 12px 28px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: background 0.2s;
+}
+
+.intro-cta:hover {
+    background: #e0e0e0;
+}
+
+.intro-section {
+    padding: 4rem 2rem;
+    background: white;
+}
+
+.intro-section-alt {
+    background: #f7f7f7;
+}
+
+.intro-section-cta {
+    background: #111;
+    color: white;
+}
+
+.intro-section-cta .intro-section-title {
+    color: white;
+}
+
+.intro-section-cta .intro-section-body {
+    color: #aaa;
+}
+
+.intro-section-cta .intro-cta {
+    background: white;
+    color: #111;
+    margin-top: 1.5rem;
+}
+
+.intro-section-inner {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.intro-section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #aaa;
+    margin-bottom: 0.75rem;
+}
+
+.intro-section-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 1rem;
+}
+
+.intro-section-body {
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.8;
+    margin-bottom: 1rem;
+    max-width: 700px;
+}
+
+/* Data cards */
+.intro-data-cards {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.intro-data-card {
+    flex: 1;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 1.5rem;
+}
+
+.intro-data-card-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+}
+
+.intro-data-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.75rem;
+}
+
+.intro-data-card p {
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+}
+
+.intro-data-stat {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #377eb8;
+    letter-spacing: 0.05em;
+}
+
+/* Finding cards */
+.intro-findings {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.intro-finding-card {
+    background: #f7f7f7;
+    border-left: 3px solid #111;
+    border-radius: 0 6px 6px 0;
+    padding: 1.25rem 1.5rem;
+}
+
+.intro-finding-year {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #888;
+    margin-bottom: 0.4rem;
+}
+
+.intro-finding-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 0.5rem;
+}
+
+.intro-finding-card p {
+    font-size: 0.82rem;
+    color: #555;
+    line-height: 1.7;
+}
