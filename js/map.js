@@ -8,7 +8,6 @@ Promise.all([
     d3.csv("data/VIW_FNT.csv")
 ]).then(([world, fluData]) => {
 
-    // Aggregate AH3 by ISO3 and year
     const byCountryYear = {};
     fluData.forEach(d => {
         const year = +d.ISO_YEAR;
@@ -40,42 +39,38 @@ Promise.all([
         706: "SOM", 710: "ZAF", 724: "ESP", 144: "LKA", 736: "SDN", 752: "SWE", 756: "CHE",
         760: "SYR", 762: "TJK", 764: "THA", 768: "TGO", 780: "TTO", 788: "TUN", 792: "TUR",
         800: "UGA", 804: "UKR", 784: "ARE", 826: "GBR", 840: "USA", 858: "URY", 860: "UZB",
-        862: "VEN", 704: "VNM", 887: "YEM", 894: "ZMB", 716: "ZWE", 466: "MLI", 288: "GHA",
-        854: "BFA", 562: "NER", 174: "COM", 450: "MDG", 454: "MWI", 882: "WSM", 760: "SYR",
-        51: "ARM", 31: "AZE", 112: "BLR", 268: "GEO", 417: "KGZ", 496: "MNG", 762: "TJK",
-        795: "TKM", 860: "UZB",
+        862: "VEN", 704: "VNM", 887: "YEM", 894: "ZMB", 716: "ZWE", 466: "MLI",
+        854: "BFA", 562: "NER", 174: "COM", 450: "MDG", 454: "MWI", 882: "WSM",
+        51: "ARM", 31: "AZE", 112: "BLR", 268: "GEO", 417: "KGZ", 795: "TKM",
     };
 
     // === BUILD MAP ===
-    function buildMap() {
-        const container = document.getElementById("map-sticky");
-        const w = container.clientWidth;
+    window.buildMap = function (containerId = "map") {
+        // Get the correct container based on which tab is active
+        const containerEl = document.getElementById(containerId);
+        if (!containerEl) return;
 
-        // NaturalEarth aspect ratio is roughly 1.97:1
-        const h = Math.round(w / 1.97);
+        const w = containerEl.clientWidth;
+        const h = containerEl.clientHeight;
+        if (!w || !h) return;
 
-        // Update container height to match
-        container.style.height = h + "px";
-        document.getElementById("scroll-section").style.height = h + "px";
-        document.getElementById("scroll-panels").style.height = h + "px";
-        document.querySelectorAll(".scroll-panel").forEach(p => p.style.minHeight = h + "px");
+        // Clear previous map
+        d3.select(`#${containerId}`).selectAll("*").remove();
 
-        d3.select("#map").selectAll("*").remove();
-
-        const svg = d3.select("#map")
+        const svg = d3.select(`#${containerId}`)
             .append("svg")
             .attr("width", w)
             .attr("height", h);
 
         const projection = d3.geoNaturalEarth1()
-            .fitExtent([[0, 0], [w, h]], { type: "Sphere" })
-            .scale(210);
+            .fitExtent([[0, 0], [w, h]], { type: "Sphere" });
 
-        // Shift map left to reduce left whitespace
         const t = projection.translate();
-        projection.translate([t[0] - 30, t[1]]);
+        projection.translate([t[0] - 20, t[1]]);
 
         const path = d3.geoPath().projection(projection);
+
+        const currentYear = +document.getElementById("yearSlider").value || 2010;
 
         svg.selectAll(".country")
             .data(countries.features)
@@ -86,8 +81,31 @@ Promise.all([
             .attr("stroke-width", 0.5)
             .attr("fill", d => {
                 const iso3 = idToISO3[+d.id];
-                const val = byCountryYear[`${iso3}-2010`] || 0;
+                const val = byCountryYear[`${iso3}-${currentYear}`] || 0;
                 return val > 0 ? colorScale(val) : "#c0c0c0";
+            })
+            .on("mouseover", function (event, d) {
+                const iso3 = idToISO3[+d.id];
+                const year = +document.getElementById("yearSlider").value;
+                const val = byCountryYear[`${iso3}-${year}`] || 0;
+                const countryName = d.properties?.name || iso3 || "Unknown";
+                d3.select("#tooltip")
+                    .style("display", "block")
+                    .html(`
+                <div style="font-weight:bold;margin-bottom:4px;">${countryName}</div>
+                <div>📅 Year: ${year}</div>
+                <div>🦠 H3N2 cases: ${val > 0 ? val.toLocaleString() : "No data"}</div>
+            `);
+                d3.select(this).attr("stroke", "#333").attr("stroke-width", 1.5);
+            })
+            .on("mousemove", function (event) {
+                d3.select("#tooltip")
+                    .style("left", (event.clientX + 12) + "px")
+                    .style("top", (event.clientY - 28) + "px");
+            })
+            .on("mouseout", function (event, d) {
+                d3.select("#tooltip").style("display", "none");
+                d3.select(this).attr("stroke", "#fff").attr("stroke-width", 0.5);
             });
 
         // === MAP LEGEND ===
@@ -96,10 +114,9 @@ Promise.all([
         const legendX = 10;
         const legendY = h - 55;
 
-        // Gradient bar
         const defs = svg.append("defs");
         const linearGradient = defs.append("linearGradient")
-            .attr("id", "map-legend-gradient");
+            .attr("id", `map-legend-gradient-${containerId}`);
 
         linearGradient.selectAll("stop")
             .data([
@@ -124,7 +141,7 @@ Promise.all([
             .attr("width", legendWidth)
             .attr("height", legendHeight)
             .attr("rx", 3)
-            .style("fill", "url(#map-legend-gradient)");
+            .style("fill", `url(#map-legend-gradient-${containerId})`);
 
         svg.append("text")
             .attr("x", legendX)
@@ -141,7 +158,6 @@ Promise.all([
             .attr("text-anchor", "end")
             .text("More");
 
-        // No data indicator
         svg.append("rect")
             .attr("x", legendX)
             .attr("y", legendY + legendHeight + 22)
@@ -157,34 +173,40 @@ Promise.all([
             .attr("fill", "#666")
             .text("No data");
 
-        window._mapPath = path;
-        window._mapSvg = svg;
-        window._idToISO3 = idToISO3;
-        window._byCountryYear = byCountryYear;
-    }
+        // Store references keyed by containerId
+        if (!window._maps) window._maps = {};
+        window._maps[containerId] = { svg, path, idToISO3, byCountryYear };
+    };
 
-    buildMap();
+    // Build map initially for map-view
+    window.buildMap("map");
 
-    // Redraw on resize
+    // Resize observer on map container
     const resizeObserver = new ResizeObserver(() => {
-        buildMap();
-        if (window.updateYear) window.updateYear(+document.getElementById("yearSlider").value);
+        const activeTab = document.querySelector(".tab.active")?.dataset.tab;
+        if (activeTab === "map") window.buildMap("map");
+        if (activeTab === "both") window.buildMap("map-both");
     });
-    resizeObserver.observe(document.getElementById("map-sticky"));
+    resizeObserver.observe(document.getElementById("map-view"));
 
     // === UPDATE FUNCTION ===
     window.updateYear = function (year) {
         year = +year;
         d3.select("#yearLabel").text(year);
         document.getElementById("yearSlider").value = year;
-        if (window._mapSvg) {
-            window._mapSvg.selectAll(".country")
-                .attr("fill", d => {
-                    const iso3 = window._idToISO3[+d.id];
-                    const val = window._byCountryYear[`${iso3}-${year}`] || 0;
-                    return val > 0 ? colorScale(val) : "#c0c0c0";
-                });
+
+        // Update all active maps
+        if (window._maps) {
+            Object.entries(window._maps).forEach(([id, mapData]) => {
+                mapData.svg.selectAll(".country")
+                    .attr("fill", d => {
+                        const iso3 = mapData.idToISO3[+d.id];
+                        const val = mapData.byCountryYear[`${iso3}-${year}`] || 0;
+                        return val > 0 ? colorScale(val) : "#c0c0c0";
+                    });
+            });
         }
+
         if (window.updateTree) window.updateTree(year);
     };
 

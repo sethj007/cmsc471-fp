@@ -1,6 +1,6 @@
 // === DIMENSIONS ===
 const width = 2500;
-const height = 1500;
+const height = 800;
 const margin = { top: 20, right: 220, bottom: 40, left: 20 };
 const innerWidth = width - margin.left - margin.right;
 const innerHeight = height - margin.top - margin.bottom;
@@ -235,7 +235,6 @@ function drawTree(newickData) {
     const getX = d => xScale(d.data.depth);
     const getY = d => d.data._y;
 
-    // Track current reveal state
     let currentRevealX = innerWidth;
     let activeRegions = new Set(["North America", "South America", "Europe", "Asia", "Africa", "Oceania"]);
 
@@ -333,8 +332,9 @@ function drawTree(newickData) {
     function applyFilters(transition = true) {
         const t = transition ? d3.transition().duration(400).ease(d3.easeCubicInOut) : null;
 
-        const nodes = d3.selectAll(".node circle");
-        const links = d3.selectAll(".link");
+        // Target both main tree and clone
+        const nodes = d3.selectAll("#tree .node circle, #tree-clone .node circle");
+        const links = d3.selectAll("#tree .link, #tree-clone .link");
 
         (transition ? nodes.transition(t) : nodes)
             .attr("opacity", d => {
@@ -355,64 +355,185 @@ function drawTree(newickData) {
             });
     }
 
-    // === LEGEND ===
-    const regions = [
-        { label: "North America", color: "#e41a1c" },
-        { label: "South America", color: "#ff7f00" },
-        { label: "Europe", color: "#4daf4a" },
-        { label: "Asia", color: "#377eb8" },
-        { label: "Africa", color: "#984ea3" },
-        { label: "Oceania", color: "#a65628" },
+    // === CLADE DEFINITIONS ===
+    const cladeDefinitions = [
+        { name: "3C", startYear: 2008, endYear: 2013, color: "#888888" },
+        { name: "3C.2a", startYear: 2014, endYear: 2015, color: "#e41a1c" },
+        { name: "3C.3a", startYear: 2015, endYear: 2018, color: "#ff7f00" },
+        { name: "3C.2a1", startYear: 2016, endYear: 2019, color: "#4daf4a" },
+        { name: "3C.2a1b", startYear: 2019, endYear: 2022, color: "#377eb8" },
+        { name: "2a.1b.2a", startYear: 2022, endYear: 2024, color: "#984ea3" },
+        { name: "2a.1b.2b", startYear: 2024, endYear: 2027, color: "#a65628" },
     ];
 
-    const legendDiv = d3.select("#tree-section").append("div")
-        .attr("class", "legend-div")
-        .style("position", "absolute")
-        .style("top", "-30px")
-        .style("right", "20px")
-        .style("background", "white")
-        .style("border", "1px solid #ccc")
-        .style("padding", "10px 14px")
-        .style("border-radius", "6px")
-        .style("font-size", "13px")
-        .style("z-index", "1000")
-        .style("box-shadow", "0 2px 6px rgba(0,0,0,0.15)");
+    // === DENSITY VIEW ===
+    window.showDensityView = function () {
+        svg.selectAll(".link").style("display", "none");
+        svg.selectAll(".node").style("display", "none");
+        sweepLine.style("display", "none");
+        svg.selectAll(".density-overlay").remove();
+        svg.selectAll(".clade-group").remove(); // fix: clear collapsed view
 
-    legendDiv.append("div")
-        .style("font-weight", "bold")
-        .style("margin-bottom", "8px")
-        .style("font-size", "11px")
-        .style("color", "#888")
-        .text("CLICK TO FILTER");
+        const leaves = root.leaves();
+        const binCountX = 60;
+        const binCountY = 40;
+        const cellW = innerWidth / binCountX;
+        const cellH = innerHeight / binCountY;
 
-    regions.forEach(r => {
-        const row = legendDiv.append("div")
-            .style("display", "flex")
-            .style("align-items", "center")
-            .style("margin-bottom", "6px")
-            .style("cursor", "pointer")
-            .style("user-select", "none")
-            .on("click", function () {
-                if (activeRegions.has(r.label)) {
-                    activeRegions.delete(r.label);
-                    d3.select(this).style("opacity", 0.35);
-                } else {
-                    activeRegions.add(r.label);
-                    d3.select(this).style("opacity", 1);
-                }
-                applyFilters(true);
+        const grid = Array.from({ length: binCountX }, () => Array(binCountY).fill(0));
+        const gridLeaves = Array.from({ length: binCountX }, () => Array.from({ length: binCountY }, () => []));
+
+        leaves.forEach(leaf => {
+            const x = getX(leaf);
+            const y = getY(leaf);
+            const xi = Math.min(Math.floor(x / cellW), binCountX - 1);
+            const yi = Math.min(Math.floor(y / cellH), binCountY - 1);
+            grid[xi][yi]++;
+            gridLeaves[xi][yi].push(leaf);
+        });
+
+        const maxCount = Math.max(...grid.flat());
+        const densityColor = d3.scaleSequential()
+            .domain([0, maxCount])
+            .interpolator(d3.interpolateYlOrRd);
+
+        const densityGroup = svg.append("g").attr("class", "density-overlay");
+
+        for (let xi = 0; xi < binCountX; xi++) {
+            for (let yi = 0; yi < binCountY; yi++) {
+                const count = grid[xi][yi];
+                if (count === 0) continue;
+                const cellLeaves = gridLeaves[xi][yi];
+                const regionCounts = {};
+                cellLeaves.forEach(leaf => {
+                    const r = getRegion(leaf.data.name);
+                    regionCounts[r] = (regionCounts[r] || 0) + 1;
+                });
+                const topRegion = Object.entries(regionCounts).sort((a, b) => b[1] - a[1])[0];
+                const yearMin = d3.min(cellLeaves, l => extractYear(l.data.name));
+                const yearMax = d3.max(cellLeaves, l => extractYear(l.data.name));
+
+                densityGroup.append("rect")
+                    .attr("class", "density-cell")
+                    .attr("x", xi * cellW)
+                    .attr("y", yi * cellH)
+                    .attr("width", cellW)
+                    .attr("height", cellH)
+                    .attr("fill", densityColor(count))
+                    .attr("opacity", 0.85)
+                    .on("mouseover", function (event) {
+                        d3.select("#tooltip")
+                            .style("display", "block")
+                            .html(`
+                            <div style="font-weight:bold;margin-bottom:4px;">Density Cell</div>
+                            <div>🧬 Strains: ${count}</div>
+                            <div>📅 Years: ${yearMin}–${yearMax}</div>
+                            <div>🌍 Top region: ${topRegion[0]} (${topRegion[1]})</div>
+                        `);
+                    })
+                    .on("mousemove", function (event) {
+                        d3.select("#tooltip")
+                            .style("left", (event.clientX + 12) + "px")
+                            .style("top", (event.clientY - 28) + "px");
+                    })
+                    .on("mouseout", function () {
+                        d3.select("#tooltip").style("display", "none");
+                    });
+            }
+        }
+    };
+
+    // === COLLAPSED VIEW ===
+    window.showCollapsedView = function () {
+        svg.selectAll(".link").style("display", "none");
+        svg.selectAll(".node").style("display", "none");
+        sweepLine.style("display", "none");
+        svg.selectAll(".density-overlay").remove(); // fix: clear density view
+        svg.selectAll(".clade-group").remove();
+
+        const leaves = root.leaves();
+
+        cladeDefinitions.forEach(clade => {
+            const cladeLeaves = leaves.filter(leaf => {
+                const year = extractYear(leaf.data.name);
+                return year >= clade.startYear && year < clade.endYear;
             });
 
-        row.append("div")
-            .style("width", "12px")
-            .style("height", "12px")
-            .style("border-radius", "50%")
-            .style("background", r.color)
-            .style("margin-right", "8px")
-            .style("flex-shrink", "0");
+            if (cladeLeaves.length === 0) return;
 
-        row.append("span").text(r.label);
-    });
+            const xValues = cladeLeaves.map(getX);
+            const yValues = cladeLeaves.map(getY);
+            const xMin = Math.min(...xValues);
+            const xMax = Math.max(...xValues);
+            const yMin = Math.min(...yValues);
+            const yMax = Math.max(...yValues);
+            const yMid = (yMin + yMax) / 2;
+
+            // Region breakdown for tooltip
+            const regionCounts = {};
+            cladeLeaves.forEach(leaf => {
+                const r = getRegion(leaf.data.name);
+                regionCounts[r] = (regionCounts[r] || 0) + 1;
+            });
+            const topRegions = Object.entries(regionCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([r, n]) => `${r}: ${n}`)
+                .join(", ");
+
+            const g = svg.append("g").attr("class", "clade-group");
+
+            const points = [
+                [xMin, yMid],
+                [xMax, yMin],
+                [xMax, yMax]
+            ].map(p => p.join(",")).join(" ");
+
+            g.append("polygon")
+                .attr("points", points)
+                .attr("fill", clade.color)
+                .attr("opacity", 0.7)
+                .attr("stroke", clade.color)
+                .attr("stroke-width", 1)
+                .on("mouseover", function (event) {
+                    d3.select("#tooltip")
+                        .style("display", "block")
+                        .html(`
+                        <div style="font-weight:bold;margin-bottom:4px;">${clade.name}</div>
+                        <div>🧬 Strains: ${cladeLeaves.length}</div>
+                        <div>📅 Years: ${clade.startYear}–${clade.endYear - 1}</div>
+                        <div>🌍 Top regions: ${topRegions}</div>
+                    `);
+                })
+                .on("mousemove", function (event) {
+                    d3.select("#tooltip")
+                        .style("left", (event.clientX + 12) + "px")
+                        .style("top", (event.clientY - 28) + "px");
+                })
+                .on("mouseout", function () {
+                    d3.select("#tooltip").style("display", "none");
+                });
+
+            g.append("text")
+                .attr("x", xMax + 8)
+                .attr("y", yMid + 4)
+                .attr("font-size", "11px")
+                .attr("font-weight", "bold")
+                .attr("fill", clade.color)
+                .text(`${clade.name} (n=${cladeLeaves.length})`);
+        });
+    };
+
+    // === RESTORE ALL TIPS VIEW ===
+    window.showAllTipsView = function () {
+        svg.selectAll(".density-overlay").remove();
+        svg.selectAll(".clade-group").remove();
+        svg.selectAll(".link").style("display", null);
+        svg.selectAll(".node").style("display", null);
+        sweepLine.style("display", null);
+        const currentYear = +document.getElementById("yearSlider").value;
+        if (window.updateTree) window.updateTree(currentYear);
+    };
 
     // === EXPOSE TREE UPDATE FUNCTION ===
     window.updateTree = function (year) {
@@ -420,11 +541,24 @@ function drawTree(newickData) {
         const depth = ROOT_OFFSET + (year - ROOT_YEAR);
         currentRevealX = xScale(Math.min(depth, MAX_DEPTH));
 
+        // Update sweep line in main tree
         sweepLine
             .transition().duration(600).ease(d3.easeCubicInOut)
             .attr("x1", currentRevealX)
             .attr("x2", currentRevealX);
 
+        // Update sweep line in cloned tree (BOTH tab)
+        d3.select("#tree-clone").selectAll(".sweep-line")
+            .transition().duration(600).ease(d3.easeCubicInOut)
+            .attr("x1", currentRevealX)
+            .attr("x2", currentRevealX);
+
+        applyFilters(true);
+    };
+
+    // === EXPOSE REGION FILTER ===
+    window.applyRegionFilter = function (regions) {
+        activeRegions = regions;
         applyFilters(true);
     };
 }

@@ -1,111 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FluLines</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
 
-    <!-- HEADER -->
-    <div id="header">
-        <h1>FluLines</h1>
-        <p id="intro">
-            Every year, the influenza H3N2 virus mutates, travels across continents, and returns in an altered form.
-            This is not random — it follows patterns shaped by geography, immunity, and evolution.
-            Scroll to trace H3N2's global journey from 2010 to today, then explore the evolutionary tree that shows how each strain is related.
-        </p>
+    <!-- TOP BAR -->
+    <div id="topbar">
+        <div id="topbar-left">
+            <h1 id="title">H3N2 — Global Spread & Evolution</h1>
+            <span id="subtitle">2008 → 2026 · NEXTSTRAIN × FLUNET</span>
+        </div>
+        <div id="topbar-right">
+            <button class="topbar-btn" id="btn-about">ABOUT</button>
+            <button class="topbar-btn" id="btn-data">DATA</button>
+            <button class="topbar-btn" id="btn-share">SHARE</button>
+        </div>
     </div>
 
-    <!-- STICKY SCRUBBER -->
-    <div id="scrubber">
-        <label for="yearSlider"><strong>Year: <span id="yearLabel">2010</span></strong></label>
+    <!-- TABS -->
+    <div id="tabbar">
+        <div id="tabs">
+            <button class="tab active" data-tab="tree">TREE</button>
+            <button class="tab" data-tab="map">MAP</button>
+            <button class="tab" data-tab="both">BOTH</button>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="content">
+
+        <!-- LEFT: visualizations -->
+        <div id="vis-panel">
+
+            <!-- Tree view -->
+            <div id="tree-view" class="view active">
+                <div id="tree-container">
+                    <svg id="tree-axis" style="display:block;"></svg>
+                    <div id="tree"></div>
+                </div>
+            </div>
+
+            <!-- Map view -->
+            <div id="map-view" class="view">
+                <div id="map"></div>
+            </div>
+
+            <!-- Both view -->
+            <div id="both-view" class="view">
+
+                <!-- Tree panel (top) -->
+                <div id="both-tree-panel">
+                    <div id="both-tree-toolbar">
+                        <span class="toolbar-label">Phylogenetic tree</span>
+                        <div class="toolbar-group">
+                            <span class="toolbar-sublabel">DENSITY</span>
+                            <div class="segmented-control">
+                                <button class="seg-btn active" data-density="tips">All tips</button>
+                                <button class="seg-btn" data-density="density">Density</button>
+                                <button class="seg-btn" data-density="collapsed">Collapsed</button>
+                            </div>
+                        </div>
+                        <div class="toolbar-group">
+                            <span class="toolbar-sublabel">COLOR BY</span>
+                            <div class="segmented-control">
+                                <button class="seg-btn active" data-color="region">Region</button>
+                                <button class="seg-btn" data-color="clade">Clade</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="both-tree-container">
+                        <div id="both-tree"></div>
+                    </div>
+                </div>
+
+                <!-- Map panel (bottom) -->
+                <div id="both-map-panel">
+                    <div id="both-map-toolbar">
+                        <span class="toolbar-label">H3N2 cases reported</span>
+                        <div class="toolbar-group">
+                            <span class="toolbar-sublabel">VIEW</span>
+                            <div class="segmented-control">
+                                <button class="seg-btn active" data-view="choropleth">Choropleth</button>
+                                <button class="seg-btn" data-view="bubbles">Bubbles</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="both-map-container">
+                        <div id="map-both"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- RIGHT: context panel -->
+        <div id="context-panel">
+            <button id="context-collapse-btn">‹</button>
+            <div id="context-panel-inner">
+
+                <div id="context-what">
+                    <div class="context-label">WHAT YOU'RE LOOKING AT</div>
+                    <div id="context-title">The H3N2 Family Tree</div>
+                    <div id="context-desc">Explore how H3N2 strains evolved and diverged over time. Each branch
+                        represents a lineage; each dot a sequenced sample.</div>
+                </div>
+
+                <div id="context-story">
+                    <div class="context-label">THE STORY</div>
+                    <div id="story-panels">
+                        <div class="story-panel active" data-year="2010">
+                            <h3>2010 — H3N2 Re-emerges</h3>
+                            <p>After the 2009 H1N1 pandemic, H3N2 quietly reasserted itself as the dominant seasonal
+                                strain. Surveillance networks began tracking its spread with renewed urgency.</p>
+                        </div>
+                        <div class="story-panel" data-year="2014">
+                            <h3>2014 — The Vaccine Mismatch</h3>
+                            <p>A major antigenic drift caused the flu vaccine to be poorly matched to circulating
+                                strains. Case counts surged across North America and Asia.</p>
+                        </div>
+                        <div class="story-panel" data-year="2017">
+                            <h3>2017 — One of the Worst Seasons in Decades</h3>
+                            <p>Another mismatch year. One of the lowest vaccine effectiveness rates ever recorded.
+                                Hospitalizations spiked in the US, Australia, and Europe.</p>
+                        </div>
+                        <div class="story-panel" data-year="2020">
+                            <h3>2020 — COVID Nearly Eliminated the Flu</h3>
+                            <p>H3N2 almost disappeared. Pandemic measures decimated influenza transmission globally.
+                                Cases dropped to historic lows across most of the world.</p>
+                        </div>
+                        <div class="story-panel" data-year="2024">
+                            <h3>2024 — The Rebound</h3>
+                            <p>H3N2 rebounded as pandemic measures lifted. Surveillance networks now track thousands of
+                                sequences per year to stay ahead of the next mismatch.</p>
+                        </div>
+                    </div>
+                    <div id="story-nav">
+                        <button id="story-prev">←</button>
+                        <span id="story-counter">1 / 5</span>
+                        <button id="story-next">→</button>
+                    </div>
+                </div>
+
+                <div id="context-legend">
+                    <div class="context-label">LEGEND</div>
+                    <div id="legend-items"></div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BOTTOM TIMELINE -->
+    <div id="timeline">
+        <button id="play-btn">▶</button>
+        <span class="timeline-label">2008</span>
         <input type="range" id="yearSlider" min="2008" max="2026" value="2010" step="1">
-    </div>
-
-    <!-- STORYTELLING SECTION -->
-    <div id="scroll-section">
-
-        <!-- Sticky map on the left -->
-        <div id="map-sticky">
-            <div id="map"></div>
+        <span class="timeline-label">2026</span>
+        <div id="timeline-center">
+            <span id="yearLabel">2010</span>
         </div>
-
-        <!-- Text panels on the right -->
-        <div id="scroll-panels">
-
-            <div class="scroll-panel" data-year="2010">
-                <h2>2010 — H3N2 Re-emerges</h2>
-                <p>
-                    After the 2009 H1N1 "swine flu" pandemic dominated global headlines, H3N2 quietly reasserted itself as the dominant seasonal influenza strain. 
-                    Surveillance networks across North America, Europe, and Asia began tracking its spread with renewed urgency.
-                    The map shows early but widespread H3N2 activity — a virus already present on every inhabited continent.
-                </p>
-            </div>
-
-            <div class="scroll-panel" data-year="2014">
-                <h2>2014 — The Vaccine Mismatch</h2>
-                <p>
-                    2014 marked one of the most significant H3N2 events in recent memory: a major antigenic drift caused the season's flu vaccine to be poorly matched to circulating strains.
-                    The virus had mutated faster than vaccine production cycles could keep up with.
-                    Case counts surged across North America and Asia, and the mismatch prompted a global reassessment of how vaccines are selected each year.
-                </p>
-            </div>
-
-            <div class="scroll-panel" data-year="2017">
-                <h2>2017 — One of the Worst Seasons in Decades</h2>
-                <p>
-                    Another vaccine mismatch year. H3N2 strains circulating in 2017 diverged significantly from the vaccine reference strain, resulting in one of the lowest vaccine effectiveness rates ever recorded.
-                    Hospitalizations spiked in the United States, Australia, and Europe.
-                    This season became a case study in the difficulty of predicting influenza evolution.
-                </p>
-            </div>
-
-            <div class="scroll-panel" data-year="2020">
-                <h2>2020 — COVID Nearly Eliminated the Flu</h2>
-                <p>
-                    Something unprecedented happened in 2020: H3N2 almost disappeared.
-                    Masks, lockdowns, school closures, and reduced international travel — measures taken to slow COVID-19 — also decimated influenza transmission globally.
-                    Reported H3N2 cases dropped to historic lows across most of the world.
-                    The map tells a striking story: a virus that had circulated every year for decades was suddenly almost absent.
-                </p>
-            </div>
-
-            <div class="scroll-panel" data-year="2024">
-                <h2>2024 — The Rebound</h2>
-                <p>
-                    As pandemic-era measures lifted, H3N2 rebounded — but not identically to before.
-                    Years of reduced circulation meant population immunity had waned, and the virus had continued evolving in the strains that did circulate.
-                    Today, surveillance networks track thousands of sequences per year to stay ahead of the next potential mismatch.
-                    The fight against H3N2 is ongoing.
-                </p>
-            </div>
-
+        <div id="speed-controls">
+            <button class="speed-btn" data-speed="0.5">0.5×</button>
+            <button class="speed-btn active" data-speed="1">1×</button>
+            <button class="speed-btn" data-speed="2">2×</button>
+            <button class="speed-btn" data-speed="4">4×</button>
         </div>
-    </div>
-
-    <!-- TREE SECTION -->
-    <div id="tree-section">
-        <h2>The Evolutionary Tree</h2>
-        <p id="tree-intro">
-            The phylogenetic tree below shows the evolutionary relationships between H3N2 strains sampled globally from 2008 to 2026.
-            Each dot is a sequenced virus sample. The horizontal position reflects when it was collected — branches that split earlier diverged longer ago.
-            Colors indicate where each sample was collected. Scroll horizontally to explore the full timeline, and hover over any node for details.
-        </p>
-        <div id="tree-container">
-            <svg id="tree-axis" style="display: block;"></svg>
-            <div id="tree"></div>
-        </div>
+        <button id="reset-btn">↺ Reset</button>
     </div>
 
     <div id="tooltip" style="display:none"></div>
 
-    <!-- SCRIPTS -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/topojson@3/dist/topojson.min.js"></script>
     <script src="js/tree.js"></script>
     <script src="js/map.js"></script>
     <script src="js/scroll.js"></script>
 </body>
+
 </html>
