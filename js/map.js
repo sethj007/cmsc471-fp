@@ -323,3 +323,30 @@ Promise.all([
         window.updateYear(+this.value);
     });
 });
+
+// HIHGLIGHT ON TREE HOVER
+
+window.highlightMapCountry = function(targetCountry) {
+    if (!window._maps) return;
+    Object.values(window._maps).forEach(mapData => {
+        mapData.svg.selectAll(".country")
+            .transition().duration(150)
+            .style("opacity", d => {
+                return d.properties.name === targetCountry ? 1 : 0.1;
+            })
+            .style("stroke", d => {
+                return d.properties.name === targetCountry ? "#000" : "#fff";
+            });
+    });
+};
+
+window.clearMapHighlight = function() {
+    if (!window._maps) return;
+    Object.values(window._maps).forEach(mapData => {
+        mapData.svg.selectAll(".country")
+            .transition().duration(150)
+            .style("opacity", 1)
+            .style("fill", null) // Reverts to CSS default
+            .style("stroke", "#fff");
+    });
+};
