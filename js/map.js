@@ -187,7 +187,7 @@ Promise.all([
         window._maps[containerId] = { svg, path, idToISO3, byCountryYear };
     };
 
-    // Build map initially for map-view
+    // Build map initially for map-viet w
     window.buildMap("map");
 
     // Resize observer on map container
@@ -214,6 +214,17 @@ Promise.all([
                         return val > 0 ? colorScale(val) : "#c0c0c0";
                     });
             });
+        //match the story to the current year
+        const panels = document.querySelectorAll(".story-panel");
+        let matchIndex = -1;
+        panels.forEach((panel, i) => {
+            if (+panel.dataset.year <= year) matchIndex = i;
+        });
+        if (matchIndex !== -1 && matchIndex !== currentStory) {
+            currentStory = matchIndex;
+            showStory(matchIndex);
+    }
+            
         }
 
         if (window.updateTree) window.updateTree(year);

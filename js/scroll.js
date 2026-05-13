@@ -190,6 +190,13 @@ function startPlay() {
         if (window.updateYear){
             window.updateYear(year);
         }
+
+        storyPanels.forEach((panel, index) => {
+            if (+panel.dataset.year === year) {
+                currentStory = index;
+                showStory(index);
+            }
+        });
     }, baseInterval / playSpeed);
 }
 
