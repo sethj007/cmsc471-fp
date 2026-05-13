@@ -185,6 +185,12 @@ Promise.all([
 
         if (!window._maps) window._maps = {};
         window._maps[containerId] = { svg, path, idToISO3, byCountryYear };
+
+        //reset to chloro selector
+        window._mapViewMode[containerId] = "choropleth";
+        document.querySelectorAll(".seg-btn[data-view]").forEach(b => {
+            b.classList.toggle("active", b.dataset.view === "choropleth");
+        });
     };
 
     // === SHOW BUBBLES ===
