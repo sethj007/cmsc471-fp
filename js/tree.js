@@ -152,7 +152,25 @@ function getRegion(name) {
     return regionMap[match[1]] || "Unknown";
 }
 
-// === NEWICK PARSER ===
+const cladeDefinitions = [
+    { name: "3C",       startYear: 2008, endYear: 2013, color: "#888888" },
+    { name: "3C.2a",    startYear: 2014, endYear: 2015, color: "#e41a1c" },
+    { name: "3C.3a",    startYear: 2015, endYear: 2018, color: "#ff7f00" },
+    { name: "3C.2a1",   startYear: 2016, endYear: 2019, color: "#4daf4a" },
+    { name: "3C.2a1b",  startYear: 2019, endYear: 2022, color: "#377eb8" },
+    { name: "2a.1b.2a", startYear: 2022, endYear: 2024, color: "#984ea3" },
+    { name: "2a.1b.2b", startYear: 2024, endYear: 2027, color: "#a65628" },
+];
+
+function getCladeForLeaf(leaf) {
+    const year = extractYear(leaf.data.name);
+    if (!year) return { name: "Unknown", color: "#cccccc" };
+    for (const clade of cladeDefinitions) {
+        if (year >= clade.startYear && year < clade.endYear) return clade;
+    }
+    return { name: "Unknown", color: "#cccccc" };
+}
+
 function parseNewick(s) {
     let ancestors = [];
     let tree = {};
@@ -190,7 +208,6 @@ function parseNewick(s) {
     return tree;
 }
 
-// === COMPUTE CUMULATIVE DEPTH ===
 function computeDepths(node, depth = 0) {
     node.depth = depth + (node.length || 0);
     if (node.children) {
@@ -198,14 +215,12 @@ function computeDepths(node, depth = 0) {
     }
 }
 
-// === EXTRACT YEAR FROM STRAIN NAME ===
 function extractYear(name) {
     if (!name) return null;
     const match = name.match(/\/(\d{4})(?:-egg)?$/);
     return match ? parseInt(match[1]) : null;
 }
 
-// === DRAW TREE ===
 function drawTree(newickData) {
     const parsed = parseNewick(newickData);
     computeDepths(parsed);
@@ -221,9 +236,7 @@ function drawTree(newickData) {
         .domain([0, leaves.length - 1])
         .range([0, innerHeight]);
 
-    leaves.forEach((leaf, i) => {
-        leaf.data._y = yScale(i);
-    });
+    leaves.forEach((leaf, i) => { leaf.data._y = yScale(i); });
 
     function assignY(node) {
         if (!node.children) return node.data._y;
@@ -237,8 +250,9 @@ function drawTree(newickData) {
 
     let currentRevealX = innerWidth;
     let activeRegions = new Set(["North America", "South America", "Europe", "Asia", "Africa", "Oceania"]);
+    let colorMode = "region";
+    let treeViewMode = "tips";
 
-    // === SVG SETUP ===
     const svg = d3.select("#tree")
         .append("svg")
         .attr("width", width)
@@ -246,27 +260,42 @@ function drawTree(newickData) {
         .append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // === DRAW LINKS ===
+    function getLinkColor(d) {
+        const leaves = d.target.leaves ? d.target.leaves() : [];
+        if (leaves.length === 0) return "#ccc";
+        if (colorMode === "clade") {
+            const cladeCounts = {};
+            leaves.forEach(leaf => {
+                const c = getCladeForLeaf(leaf).name;
+                cladeCounts[c] = (cladeCounts[c] || 0) + 1;
+            });
+            const dominant = Object.entries(cladeCounts).sort((a, b) => b[1] - a[1])[0][0];
+            const clade = cladeDefinitions.find(c => c.name === dominant);
+            return clade ? clade.color : "#ccc";
+        }
+        const regionCounts = {};
+        leaves.forEach(leaf => {
+            const r = getRegion(leaf.data.name);
+            regionCounts[r] = (regionCounts[r] || 0) + 1;
+        });
+        const dominant = Object.entries(regionCounts).sort((a, b) => b[1] - a[1])[0][0];
+        return regionColors[dominant] || "#ccc";
+    }
+
+    function getNodeColor(d) {
+        if (colorMode === "clade") return getCladeForLeaf(d).color;
+        return regionColors[getRegion(d.data.name)] || regionColors["Unknown"];
+    }
+
     svg.selectAll(".link")
         .data(root.links())
         .join("path")
         .attr("class", "link")
         .attr("fill", "none")
         .attr("stroke-width", 0.8)
-        .attr("stroke", d => {
-            const leaves = d.target.leaves ? d.target.leaves() : [];
-            if (leaves.length === 0) return "#ccc";
-            const regionCounts = {};
-            leaves.forEach(leaf => {
-                const r = getRegion(leaf.data.name);
-                regionCounts[r] = (regionCounts[r] || 0) + 1;
-            });
-            const dominant = Object.entries(regionCounts).sort((a, b) => b[1] - a[1])[0][0];
-            return regionColors[dominant] || "#ccc";
-        })
+        .attr("stroke", d => getLinkColor(d))
         .attr("d", d => `M${getX(d.source)},${getY(d.source)} H${getX(d.target)} V${getY(d.target)}`);
 
-    // === DRAW NODES (leaves only) ===
     const node = svg.selectAll(".node")
         .data(root.descendants().filter(d => !d.children))
         .join("g")
@@ -275,35 +304,36 @@ function drawTree(newickData) {
 
     node.append("circle")
         .attr("r", 5)
-        .attr("fill", d => regionColors[getRegion(d.data.name)] || regionColors["Unknown"])
-        .on("mouseover", function (event, d) {
+        .attr("fill", d => getNodeColor(d))
+        .on("mouseover", function(event, d) {
             if (!d.data.name) return;
             const region = getRegion(d.data.name);
             const year = extractYear(d.data.name);
+            const clade = getCladeForLeaf(d);
             const locationMatch = d.data.name.match(/^A\/([^\/]+)\//);
             const location = locationMatch ? locationMatch[1] : "Unknown";
             d3.select("#tooltip")
                 .style("display", "block")
                 .html(`
-                    <div style="font-weight:bold; margin-bottom:4px;">H3N2 Influenza Sample</div>
+                    <div style="font-weight:bold;margin-bottom:4px;">H3N2 Influenza Sample</div>
                     <div>📍 Collected in: ${location}</div>
                     <div>🌍 Region: ${region}</div>
                     <div>📅 Year: ${year || "Unknown"}</div>
                     <div>🧬 Strain: ${d.data.name}</div>
+                    <div>🌿 Clade: ${clade.name}</div>
                 `);
             d3.select(this).attr("r", 7).attr("stroke", "black").attr("stroke-width", 1.5);
         })
-        .on("mousemove", function (event) {
+        .on("mousemove", function(event) {
             d3.select("#tooltip")
                 .style("left", (event.clientX + 12) + "px")
                 .style("top", (event.clientY - 28) + "px");
         })
-        .on("mouseout", function () {
+        .on("mouseout", function() {
             d3.select("#tooltip").style("display", "none");
             d3.select(this).attr("r", 5).attr("stroke", "none");
         });
 
-    // === SWEEP LINE ===
     const sweepLine = svg.append("line")
         .attr("class", "sweep-line")
         .attr("x1", innerWidth).attr("x2", innerWidth)
@@ -313,7 +343,6 @@ function drawTree(newickData) {
         .attr("stroke-dasharray", "6,4")
         .attr("opacity", 0.6);
 
-    // === TOP AXIS ===
     const axisSvg = d3.select("#tree-axis")
         .attr("width", width)
         .attr("height", 40);
@@ -328,13 +357,10 @@ function drawTree(newickData) {
         .selectAll("text")
         .attr("font-size", "11px");
 
-    // === SHARED RENDER FUNCTION ===
     function applyFilters(transition = true) {
         const t = transition ? d3.transition().duration(400).ease(d3.easeCubicInOut) : null;
-
-        // Target both main tree and clone
-        const nodes = d3.selectAll("#tree .node circle, #tree-clone .node circle");
-        const links = d3.selectAll("#tree .link, #tree-clone .link");
+        const nodes = d3.selectAll(".node circle");
+        const links = d3.selectAll(".link");
 
         (transition ? nodes.transition(t) : nodes)
             .attr("opacity", d => {
@@ -355,35 +381,27 @@ function drawTree(newickData) {
             });
     }
 
-    // === CLADE DEFINITIONS ===
-    const cladeDefinitions = [
-        { name: "3C", startYear: 2008, endYear: 2013, color: "#888888" },
-        { name: "3C.2a", startYear: 2014, endYear: 2015, color: "#e41a1c" },
-        { name: "3C.3a", startYear: 2015, endYear: 2018, color: "#ff7f00" },
-        { name: "3C.2a1", startYear: 2016, endYear: 2019, color: "#4daf4a" },
-        { name: "3C.2a1b", startYear: 2019, endYear: 2022, color: "#377eb8" },
-        { name: "2a.1b.2a", startYear: 2022, endYear: 2024, color: "#984ea3" },
-        { name: "2a.1b.2b", startYear: 2024, endYear: 2027, color: "#a65628" },
-    ];
-
-    // === DENSITY VIEW ===
-    window.showDensityView = function () {
+    window.showDensityView = function() {
+        treeViewMode = "density";
         svg.selectAll(".link").style("display", "none");
         svg.selectAll(".node").style("display", "none");
         sweepLine.style("display", "none");
         svg.selectAll(".density-overlay").remove();
-        svg.selectAll(".clade-group").remove(); // fix: clear collapsed view
+        svg.selectAll(".clade-group").remove();
 
-        const leaves = root.leaves();
+        const visibleLeaves = root.leaves().filter(leaf => getX(leaf) <= currentRevealX);
+        if (visibleLeaves.length === 0) return;
+
         const binCountX = 60;
         const binCountY = 40;
         const cellW = innerWidth / binCountX;
         const cellH = innerHeight / binCountY;
 
         const grid = Array.from({ length: binCountX }, () => Array(binCountY).fill(0));
-        const gridLeaves = Array.from({ length: binCountX }, () => Array.from({ length: binCountY }, () => []));
+        const gridLeaves = Array.from({ length: binCountX }, () =>
+            Array.from({ length: binCountY }, () => []));
 
-        leaves.forEach(leaf => {
+        visibleLeaves.forEach(leaf => {
             const x = getX(leaf);
             const y = getY(leaf);
             const xi = Math.min(Math.floor(x / cellW), binCountX - 1);
@@ -393,6 +411,8 @@ function drawTree(newickData) {
         });
 
         const maxCount = Math.max(...grid.flat());
+        if (maxCount === 0) return;
+
         const densityColor = d3.scaleSequential()
             .domain([0, maxCount])
             .interpolator(d3.interpolateYlOrRd);
@@ -421,44 +441,43 @@ function drawTree(newickData) {
                     .attr("height", cellH)
                     .attr("fill", densityColor(count))
                     .attr("opacity", 0.85)
-                    .on("mouseover", function (event) {
+                    .on("mouseover", function(event) {
                         d3.select("#tooltip")
                             .style("display", "block")
                             .html(`
-                            <div style="font-weight:bold;margin-bottom:4px;">Density Cell</div>
-                            <div>🧬 Strains: ${count}</div>
-                            <div>📅 Years: ${yearMin}–${yearMax}</div>
-                            <div>🌍 Top region: ${topRegion[0]} (${topRegion[1]})</div>
-                        `);
+                                <div style="font-weight:bold;margin-bottom:4px;">Density Cell</div>
+                                <div>🧬 Strains: ${count}</div>
+                                <div>📅 Years: ${yearMin}–${yearMax}</div>
+                                <div>🌍 Top region: ${topRegion[0]} (${topRegion[1]})</div>
+                            `);
                     })
-                    .on("mousemove", function (event) {
+                    .on("mousemove", function(event) {
                         d3.select("#tooltip")
                             .style("left", (event.clientX + 12) + "px")
                             .style("top", (event.clientY - 28) + "px");
                     })
-                    .on("mouseout", function () {
+                    .on("mouseout", function() {
                         d3.select("#tooltip").style("display", "none");
                     });
             }
         }
     };
 
-    // === COLLAPSED VIEW ===
-    window.showCollapsedView = function () {
+    window.showCollapsedView = function() {
+        treeViewMode = "collapsed";
         svg.selectAll(".link").style("display", "none");
         svg.selectAll(".node").style("display", "none");
         sweepLine.style("display", "none");
-        svg.selectAll(".density-overlay").remove(); // fix: clear density view
+        svg.selectAll(".density-overlay").remove();
         svg.selectAll(".clade-group").remove();
 
-        const leaves = root.leaves();
+        const visibleLeaves = root.leaves().filter(leaf => getX(leaf) <= currentRevealX);
 
         cladeDefinitions.forEach(clade => {
-            const cladeLeaves = leaves.filter(leaf => {
+            const cladeLeaves = visibleLeaves.filter(leaf => {
                 const year = extractYear(leaf.data.name);
                 return year >= clade.startYear && year < clade.endYear;
             });
-
             if (cladeLeaves.length === 0) return;
 
             const xValues = cladeLeaves.map(getX);
@@ -469,7 +488,6 @@ function drawTree(newickData) {
             const yMax = Math.max(...yValues);
             const yMid = (yMin + yMax) / 2;
 
-            // Region breakdown for tooltip
             const regionCounts = {};
             cladeLeaves.forEach(leaf => {
                 const r = getRegion(leaf.data.name);
@@ -495,22 +513,22 @@ function drawTree(newickData) {
                 .attr("opacity", 0.7)
                 .attr("stroke", clade.color)
                 .attr("stroke-width", 1)
-                .on("mouseover", function (event) {
+                .on("mouseover", function(event) {
                     d3.select("#tooltip")
                         .style("display", "block")
                         .html(`
-                        <div style="font-weight:bold;margin-bottom:4px;">${clade.name}</div>
-                        <div>🧬 Strains: ${cladeLeaves.length}</div>
-                        <div>📅 Years: ${clade.startYear}–${clade.endYear - 1}</div>
-                        <div>🌍 Top regions: ${topRegions}</div>
-                    `);
+                            <div style="font-weight:bold;margin-bottom:4px;">${clade.name}</div>
+                            <div>🧬 Strains: ${cladeLeaves.length}</div>
+                            <div>📅 Years: ${clade.startYear}–${clade.endYear - 1}</div>
+                            <div>🌍 Top regions: ${topRegions}</div>
+                        `);
                 })
-                .on("mousemove", function (event) {
+                .on("mousemove", function(event) {
                     d3.select("#tooltip")
                         .style("left", (event.clientX + 12) + "px")
                         .style("top", (event.clientY - 28) + "px");
                 })
-                .on("mouseout", function () {
+                .on("mouseout", function() {
                     d3.select("#tooltip").style("display", "none");
                 });
 
@@ -524,8 +542,8 @@ function drawTree(newickData) {
         });
     };
 
-    // === RESTORE ALL TIPS VIEW ===
-    window.showAllTipsView = function () {
+    window.showAllTipsView = function() {
+        treeViewMode = "tips";
         svg.selectAll(".density-overlay").remove();
         svg.selectAll(".clade-group").remove();
         svg.selectAll(".link").style("display", null);
@@ -535,35 +553,36 @@ function drawTree(newickData) {
         if (window.updateTree) window.updateTree(currentYear);
     };
 
-    // === EXPOSE TREE UPDATE FUNCTION ===
-    window.updateTree = function (year) {
+    window.setColorMode = function(mode) {
+        colorMode = mode;
+        d3.selectAll(".node circle").attr("fill", d => getNodeColor(d));
+        d3.selectAll(".link").attr("stroke", d => getLinkColor(d));
+    };
+
+    window.updateTree = function(year) {
         year = +year;
         const depth = ROOT_OFFSET + (year - ROOT_YEAR);
         currentRevealX = xScale(Math.min(depth, MAX_DEPTH));
 
-        // Update sweep line in main tree
-        sweepLine
-            .transition().duration(600).ease(d3.easeCubicInOut)
-            .attr("x1", currentRevealX)
-            .attr("x2", currentRevealX);
-
-        // Update sweep line in cloned tree (BOTH tab)
-        d3.select("#tree-clone").selectAll(".sweep-line")
-            .transition().duration(600).ease(d3.easeCubicInOut)
-            .attr("x1", currentRevealX)
-            .attr("x2", currentRevealX);
-
-        applyFilters(true);
+        if (treeViewMode === "tips") {
+            sweepLine
+                .transition().duration(600).ease(d3.easeCubicInOut)
+                .attr("x1", currentRevealX)
+                .attr("x2", currentRevealX);
+            applyFilters(true);
+        } else if (treeViewMode === "density") {
+            window.showDensityView();
+        } else if (treeViewMode === "collapsed") {
+            window.showCollapsedView();
+        }
     };
 
-    // === EXPOSE REGION FILTER ===
-    window.applyRegionFilter = function (regions) {
+    window.applyRegionFilter = function(regions) {
         activeRegions = regions;
         applyFilters(true);
     };
 }
 
-// === LOAD AND RENDER ===
 d3.text("data/nextstrain_seasonal-flu_h3n2_ha_12y_timetree.nwk").then(data => {
     drawTree(data);
 });
