@@ -175,18 +175,20 @@ let playing = false;
 let playInterval = null;
 
 function startPlay() {
-    let year = +yearSlider.value;
-    if (year >= 2026) year = 2008;
-    const baseInterval = 400;
+    const baseInterval = 600;
     playInterval = setInterval(() => {
-        year++;
-        yearSlider.value = year;
-        document.getElementById("yearLabel").textContent = year;
-        if (window.updateYear) window.updateYear(year);
+        let year = +yearSlider.value
         if (year >= 2026) {
             clearInterval(playInterval);
             playing = false;
             playBtn.textContent = "▶";
+            return;
+        }
+        year++
+        yearSlider.value = year
+        document.getElementById("yearLabel").textContent
+        if (window.updateYear){
+            window.updateYear(year);
         }
     }, baseInterval / playSpeed);
 }
