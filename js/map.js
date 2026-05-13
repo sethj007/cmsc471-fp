@@ -1,6 +1,6 @@
 // === COLOR SCALE ===
 const colorScale = d3.scaleSequentialLog()
-    .interpolator(d3.interpolateBlues);
+    .interpolator(d3.interpolateYlOrRd);
 
 // === LOAD DATA ===
 Promise.all([
@@ -120,8 +120,10 @@ Promise.all([
 
         linearGradient.selectAll("stop")
             .data([
-                { offset: "0%", color: d3.interpolateBlues(0.1) },
-                { offset: "100%", color: d3.interpolateBlues(1) }
+                { offset: "0%",   color: d3.interpolateYlOrRd(0.05) },
+                { offset: "25%",  color: d3.interpolateYlOrRd(0.3)  },
+                { offset: "60%",  color: d3.interpolateYlOrRd(0.65) },
+                { offset: "100%", color: d3.interpolateYlOrRd(1)    }
             ])
             .join("stop")
             .attr("offset", d => d.offset)
