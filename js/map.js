@@ -145,21 +145,28 @@ Promise.all([
             .attr("rx", 3)
             .style("fill", `url(#map-legend-gradient-${containerId})`);
 
-        svg.append("text")
-            .attr("x", legendX)
-            .attr("y", legendY + legendHeight + 12)
-            .attr("font-size", "10px")
-            .attr("fill", "#666")
-            .text("Fewer");
+        const legendScale = d3.scaleLog()
+            .domain([1, maxVal])
+            .range([0, legendWidth]);
 
-        svg.append("text")
-            .attr("x", legendX + legendWidth)
-            .attr("y", legendY + legendHeight + 12)
-            .attr("font-size", "10px")
-            .attr("fill", "#666")
-            .attr("text-anchor", "end")
-            .text("More");
+        const tickValues = [1, 10, 100, 1000, 10000, 100000]
+        const legendAxis = d3.axisBottom(legendScale)
+            .tickValues(tickValues)
+            .tickFormat(d => d >= 1000 ? d3.format(".0s")(d) : d)
+            .tickSize(4);
 
+        svg.append("g")
+            .attr("transform", `translate(${legendX}, ${legendY + legendHeight})`)
+            .call(legendAxis)
+            .call(g => g.select(".domain").remove())   
+            .call(g => g.selectAll("text")
+                .attr("font-size", "9px")
+                .attr("fill", "#666")
+            )
+            .call(g=> g.selectAll("line")
+                .attr("stroke", "#666")
+            );
+          
         svg.append("rect")
             .attr("x", legendX)
             .attr("y", legendY + legendHeight + 22)

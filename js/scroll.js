@@ -4,7 +4,7 @@ const views = document.querySelectorAll(".view");
 
 const contextTitles = {
     tree: { title: "The H3N2 Family Tree", desc: "Explore how H3N2 strains evolved and diverged over time. Each branch represents a lineage; each dot a sequenced sample." },
-    map: { title: "Global H3N2 Activity", desc: "See where H3N2 was circulating year by year. Darker blue = more reported cases." },
+    map: { title: "Global H3N2 Activity", desc: "See where H3N2 was circulating year by year. Deeper red = more reported cases." },
     both: { title: "Evolution Meets Geography", desc: "Watch how evolutionary branching connects to global spread. Both views respond to the timeline below." }
 };
 
