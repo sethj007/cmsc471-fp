@@ -284,13 +284,19 @@ Promise.all([
 
         if (window._maps) {
             Object.entries(window._maps).forEach(([id, mapData]) => {
+            const mode = window._mapViewMode?.[id] || "choropleth"; // check current mode
+
+            if (mode === "bubbles") {
+                window.showBubbles(id, year);  // update bubbles for new year
+            } else {
                 mapData.svg.selectAll(".country")
                     .attr("fill", d => {
                         const iso3 = mapData.idToISO3[+d.id];
                         const val = mapData.byCountryYear[`${iso3}-${year}`] || 0;
                         return val > 0 ? colorScale(val) : "#c0c0c0";
                     });
-            });
+            }
+        });
         //match the story to the current year
         const panels = document.querySelectorAll(".story-panel");
         let matchIndex = -1;
