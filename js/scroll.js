@@ -5,11 +5,7 @@ const views = document.querySelectorAll(".view");
 const contextTitles = {
     intro: { title: "Welcome to FluLines", desc: "An interactive exploration of H3N2 influenza evolution and global spread from 2008 to 2026." },
     tree: { title: "The H3N2 Family Tree", desc: "Explore how H3N2 strains evolved and diverged over time. Each branch represents a lineage; each dot a sequenced sample." },
-<<<<<<< HEAD
     map: { title: "Global H3N2 Activity", desc: "See where H3N2 was circulating year by year. Deeper red = more reported cases." },
-=======
-    map:  { title: "Global H3N2 Activity", desc: "See where H3N2 was circulating year by year. Darker blue = more reported cases." },
->>>>>>> 43746ac7f4d7b0575444237d0b15c1443183c89e
     both: { title: "Evolution Meets Geography", desc: "Watch how evolutionary branching connects to global spread. Both views respond to the timeline below." }
 };
 
@@ -220,12 +216,7 @@ let playing = false;
 let playInterval = null;
 
 function startPlay() {
-<<<<<<< HEAD
     const baseInterval = 600;
-=======
-    let year = +yearSlider.value;
-    if (year >= 2026) year = 2008;
->>>>>>> 43746ac7f4d7b0575444237d0b15c1443183c89e
     playInterval = setInterval(() => {
         let year = +yearSlider.value
         if (year >= 2026) {
@@ -234,24 +225,13 @@ function startPlay() {
             playBtn.textContent = "▶";
             return;
         }
-<<<<<<< HEAD
         year++
         yearSlider.value = year
-        document.getElementById("yearLabel").textContent
+        document.getElementById("yearLabel").textContent = year
         if (window.updateYear){
             window.updateYear(year);
         }
-
-        storyPanels.forEach((panel, index) => {
-            if (+panel.dataset.year === year) {
-                currentStory = index;
-                showStory(index);
-            }
-        });
     }, baseInterval / playSpeed);
-=======
-    }, 400 / playSpeed);
->>>>>>> 43746ac7f4d7b0575444237d0b15c1443183c89e
 }
 
 playBtn.addEventListener("click", () => {
