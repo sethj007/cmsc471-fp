@@ -37,9 +37,9 @@ Through interactive visualization, FluLines transforms complex phylogenetic and 
 ## Data & Acknowledgement
 The two major sources of data for this project are 
 
-- [Nextstrain Seasonal Influenza H3N2 Analysis](https://nextstrain.org/seasonal-flu/h3n2/ha/12y)
+- [GISAID](https://gisaid.org/phylogeny-influenza/influenza-h3n2/)
 
 - [World Health Organization Flunet](https://www.who.int/tools/flunet)
 
-In particular, FluLines was inspired by the former's real-time genomic tracking and visualization of the hemagglutinin (HA) segment of H3N2 influenza across a twelve-year period.
+FluLines was also inspired by [Nextstrain's](https://nextstrain.org/seasonal-flu/h3n2/ha/2y) real-time genomic tracking and visualization of the hemagglutinin (HA) segment of H3N2 influenza across a twelve-year period.
 
