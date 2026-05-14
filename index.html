@@ -17,9 +17,7 @@
             <span id="subtitle">2008 → 2026 · NEXTSTRAIN × FLUNET</span>
         </div>
         <div id="topbar-right">
-            <button class="topbar-btn" id="btn-about">ABOUT</button>
             <button class="topbar-btn" id="btn-data">DATA</button>
-            <button class="topbar-btn" id="btn-share">SHARE</button>
         </div>
     </div>
 
@@ -35,15 +33,11 @@
 
     <!-- MAIN CONTENT -->
     <div id="content">
-
-        <!-- LEFT: visualizations -->
         <div id="vis-panel">
 
             <!-- Intro view -->
             <div id="intro-view" class="view active">
                 <div id="intro-scroll">
-
-                    <!-- Hero -->
                     <div id="intro-hero">
                         <div id="intro-hero-content">
                             <div id="intro-eyebrow">H3N2 · 2008 → 2026</div>
@@ -56,7 +50,6 @@
                         </div>
                     </div>
 
-                    <!-- About -->
                     <div class="intro-section">
                         <div class="intro-section-inner">
                             <div class="intro-section-label">ABOUT THIS PROJECT</div>
@@ -72,8 +65,8 @@
                         </div>
                     </div>
 
-                    <!-- Data -->
-                    <div class="intro-section intro-section-alt">
+                    <!-- DATA SECTION — add id for scrolling -->
+                    <div class="intro-section intro-section-alt" id="intro-data-section">
                         <div class="intro-section-inner">
                             <div class="intro-section-label">THE DATA</div>
                             <h2 class="intro-section-title">Two Datasets, One Story</h2>
@@ -98,7 +91,6 @@
                         </div>
                     </div>
 
-                    <!-- Findings -->
                     <div class="intro-section">
                         <div class="intro-section-inner">
                             <div class="intro-section-label">KEY FINDINGS</div>
@@ -136,7 +128,6 @@
                         </div>
                     </div>
 
-                    <!-- CTA -->
                     <div class="intro-section intro-section-cta">
                         <div class="intro-section-inner" style="text-align:center;">
                             <h2 class="intro-section-title">Ready to Explore?</h2>
@@ -146,7 +137,6 @@
                             <button class="intro-cta" id="intro-end-btn">Get Started →</button>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -174,6 +164,22 @@
                     <svg id="tree-axis" style="display:block;"></svg>
                     <div id="tree"></div>
                 </div>
+                <!-- Density legend overlay -->
+                <div id="density-legend" style="display:none;">
+                    <div id="density-legend-title">Strain Density</div>
+                    <div id="density-legend-bar"></div>
+                    <div id="density-legend-labels">
+                        <span>Fewer</span>
+                        <span id="density-legend-mid"></span>
+                        <span>More</span>
+                    </div>
+                    <div id="density-legend-note">Hover a cell for details</div>
+                </div>
+                <div id="region-legend">
+                    <div id="region-legend-title">LEGEND</div>
+                    <div style="font-size:0.65rem;color:#aaa;margin-bottom:0.5rem;">Click to filter</div>
+                    <div id="legend-items"></div>
+                </div>
             </div>
 
             <!-- Map view -->
@@ -195,8 +201,6 @@
 
             <!-- Both view -->
             <div id="both-view" class="view">
-
-                <!-- Tree panel (top) -->
                 <div id="both-tree-panel">
                     <div id="both-tree-toolbar">
                         <span class="toolbar-label">Phylogenetic tree</span>
@@ -219,9 +223,23 @@
                     <div id="both-tree-container">
                         <div id="both-tree"></div>
                     </div>
+                    <!-- Density legend for BOTH tab -->
+                    <div id="density-legend-both" style="display:none;">
+                        <div id="density-legend-title">Strain Density</div>
+                        <div id="density-legend-bar"></div>
+                        <div id="density-legend-labels">
+                            <span>Fewer</span>
+                            <span id="density-legend-mid-both"></span>
+                            <span>More</span>
+                        </div>
+                        <div id="density-legend-note">Hover a cell for details</div>
+                    </div>
+                    <div id="region-legend-both">
+                        <div class="context-label">LEGEND</div>
+                        <div style="font-size:0.65rem;color:#aaa;margin-bottom:0.5rem;">Click to filter</div>
+                        <div id="legend-items-both"></div>
+                    </div>
                 </div>
-
-                <!-- Map panel (bottom) -->
                 <div id="both-map-panel">
                     <div id="both-map-toolbar">
                         <span class="toolbar-label">H3N2 cases reported</span>
@@ -237,7 +255,6 @@
                         <div id="map-both"></div>
                     </div>
                 </div>
-
             </div>
 
         </div>
@@ -246,14 +263,12 @@
         <div id="context-panel">
             <button id="context-collapse-btn">‹</button>
             <div id="context-panel-inner">
-
                 <div id="context-what">
                     <div class="context-label">WHAT YOU'RE LOOKING AT</div>
                     <div id="context-title">The H3N2 Family Tree</div>
                     <div id="context-desc">Explore how H3N2 strains evolved and diverged over time. Each branch
                         represents a lineage; each dot a sequenced sample.</div>
                 </div>
-
                 <div id="context-story">
                     <div class="context-label">THE STORY</div>
                     <div id="story-panels">
@@ -289,18 +304,11 @@
                         <button id="story-next">→</button>
                     </div>
                 </div>
-
-                <div id="context-legend">
-                    <div class="context-label">LEGEND</div>
-                    <div id="legend-items"></div>
-                </div>
-
             </div>
         </div>
-
     </div>
 
-    <!-- BOTTOM TIMELINE -->
+    <!-- BOTTOM TIMELINE — removed speed controls -->
     <div id="timeline">
         <button id="play-btn">▶</button>
         <span class="timeline-label">2008</span>
@@ -308,12 +316,6 @@
         <span class="timeline-label">2026</span>
         <div id="timeline-center">
             <span id="yearLabel">2010</span>
-        </div>
-        <div id="speed-controls">
-            <button class="speed-btn" data-speed="0.5">0.5×</button>
-            <button class="speed-btn active" data-speed="1">1×</button>
-            <button class="speed-btn" data-speed="2">2×</button>
-            <button class="speed-btn" data-speed="4">4×</button>
         </div>
         <button id="reset-btn">↺ Reset</button>
     </div>
