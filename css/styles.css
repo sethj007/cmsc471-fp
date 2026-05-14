@@ -821,3 +821,37 @@ html, body {
     min-width: 180px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+
+#region-legend {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 14px;
+    z-index: 10;
+    min-width: 140px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+#region-legend-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+}
+
+#region-legend-both {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 14px;
+    z-index: 10;
+    min-width: 140px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}

@@ -104,6 +104,25 @@ Object.entries(legendRegions).forEach(([region, color]) => {
     legendContainer.appendChild(item);
 });
 
+const legendContainerBoth = document.getElementById("legend-items-both");
+
+Object.entries(legendRegions).forEach(([region, color]) => {
+    const item = document.createElement("div");
+    item.className = "legend-item";
+    item.innerHTML = `<div class="legend-dot" style="background:${color}"></div><span>${region}</span>`;
+    item.addEventListener("click", () => {
+        if (activeRegions.has(region)) {
+            activeRegions.delete(region);
+            item.classList.add("inactive");
+        } else {
+            activeRegions.add(region);
+            item.classList.remove("inactive");
+        }
+        if (window.applyRegionFilter) window.applyRegionFilter(activeRegions);
+    });
+    legendContainerBoth.appendChild(item);
+});
+
 // === INTRO CTA BUTTONS ===
 function switchToTree() {
     tabs.forEach(t => t.classList.remove("active"));
