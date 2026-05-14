@@ -442,6 +442,8 @@ function drawTree(newickData) {
         const mid = Math.round(maxCount / 2);
         document.getElementById("density-legend-mid").textContent = mid;
         document.getElementById("density-legend-mid-both").textContent = mid;
+        document.getElementById("region-legend").style.display = "none";
+        document.getElementById("region-legend-both").style.display = "none";
     };
 
     // === COLLAPSED VIEW ===
@@ -456,6 +458,8 @@ function drawTree(newickData) {
         const visibleLeaves = root.leaves().filter(leaf => getX(leaf) <= currentRevealX);
         document.getElementById("density-legend").style.display = "none";
         document.getElementById("density-legend-both").style.display = "none";
+        document.getElementById("region-legend").style.display = "block";
+        document.getElementById("region-legend-both").style.display = "block";
 
         cladeDefinitions.forEach(clade => {
             const cladeLeaves = visibleLeaves.filter(leaf => {
@@ -509,6 +513,8 @@ function drawTree(newickData) {
         if (window.updateTree) window.updateTree(currentYear);
         document.getElementById("density-legend").style.display = "none";
         document.getElementById("density-legend-both").style.display = "none";
+        document.getElementById("region-legend").style.display = "block";
+        document.getElementById("region-legend-both").style.display = "block";
     };
 
     window.setColorMode = function (mode) {
