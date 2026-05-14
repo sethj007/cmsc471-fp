@@ -7,6 +7,7 @@ Phylogeography is the study of how evolutionary history and geographic spread ar
 
 FluLines was designed to make these otherwise invisible processes visible. Using genomic sequence data and global surveillance records, the visualization allows users to observe H3N2 evolution in real time — branch by branch, year by year, and country by country.
 
+It includes a phylogenetic tree of mapped H3N2 visualization, a map showing reported cases of H3N2 across the globe, and a linked view showing both that allows for connection between the two.
 
 The goal of FluLines is to help users better understand:
 - How influenza evolves over time
