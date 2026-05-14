@@ -436,9 +436,12 @@ function drawTree(newickData) {
             grad.append("stop").attr("offset", `${t * 100}%`).attr("stop-color", d3.interpolateYlOrRd(t));
         });
 
-        // At the top of showDensityView, after treeViewMode = "density":
+        // show both legends
         document.getElementById("density-legend").style.display = "block";
-        document.getElementById("density-legend-mid").textContent = Math.round(maxCount / 2);
+        document.getElementById("density-legend-both").style.display = "block";
+        const mid = Math.round(maxCount / 2);
+        document.getElementById("density-legend-mid").textContent = mid;
+        document.getElementById("density-legend-mid-both").textContent = mid;
     };
 
     // === COLLAPSED VIEW ===
@@ -452,6 +455,7 @@ function drawTree(newickData) {
 
         const visibleLeaves = root.leaves().filter(leaf => getX(leaf) <= currentRevealX);
         document.getElementById("density-legend").style.display = "none";
+        document.getElementById("density-legend-both").style.display = "none";
 
         cladeDefinitions.forEach(clade => {
             const cladeLeaves = visibleLeaves.filter(leaf => {
@@ -504,6 +508,7 @@ function drawTree(newickData) {
         const currentYear = +document.getElementById("yearSlider").value;
         if (window.updateTree) window.updateTree(currentYear);
         document.getElementById("density-legend").style.display = "none";
+        document.getElementById("density-legend-both").style.display = "none";
     };
 
     window.setColorMode = function (mode) {
