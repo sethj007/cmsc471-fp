@@ -1,15 +1,35 @@
+// =============================================================================
+// tree.js — H3N2 Phylogenetic Tree Visualization
+//
+// Renders an interactive timed phylogenetic tree (cladogram) of H3N2 influenza
+// strains from a Newick-format file. Supports three display modes (tips,
+// density heatmap, collapsed clades), region/clade color coding, animated
+// year-sweep, and cross-linked highlighting with the choropleth map.
+// Depends on: D3 v7
+// =============================================================================
+
 // === DIMENSIONS ===
+// Canvas and margin sizes for the full SVG drawing area.
+// innerWidth/innerHeight are the usable plot area after margins are applied.
 const width = 2500;
 const height = 800;
 const margin = { top: 20, right: 220, bottom: 40, left: 20 };
 const innerWidth = width - margin.left - margin.right;
 const innerHeight = height - margin.top - margin.bottom;
 
+// Time-axis calibration constants.
+// ROOT_YEAR:   the calendar year that maps to depth 0 in the Newick tree.
+// ROOT_OFFSET: the branch-length depth of the root node (fractional years).
+// MAX_DEPTH:   the maximum branch-length depth across all leaves.
+// YEARS_SPAN:  total number of integer years the tree spans.
 const ROOT_YEAR = 2008;
 const ROOT_OFFSET = 0.846;
 const MAX_DEPTH = 18.584;
 const YEARS_SPAN = Math.round(MAX_DEPTH - ROOT_OFFSET);
+
 // === REGION MAPPING ===
+// Maps every location token found in strain names (e.g. "A/Wisconsin/…") to
+// one of six WHO-style world regions. Used for color coding nodes and links.
 const regionMap = {
     "Wisconsin": "North America", "Pennsylvania": "North America", "Alaska": "North America",
     "Michigan": "North America", "Texas": "North America", "Washington": "North America",
@@ -135,7 +155,11 @@ const regionMap = {
     "Fiji": "Oceania", "Papeete": "Oceania", "SolomonIslands": "Oceania", "Samoa": "Oceania",
 };
 
-const location_country ={'Wisconsin': 'United States of America', 'Pennsylvania': 'United States of America', 'Alaska': 'United States of America', 'Michigan': 'United States of America', 'Texas': 'United States of America', 'Washington': 'United States of America', 'Wyoming': 'United States of America', 'Minnesota': 'United States of America', 'Hawaii': 'United States of America', 'Nevada': 'United States of America', 'Ohio': 'United States of America', 'Montana': 'United States of America', 'Arizona': 'United States of America', 'Delaware': 'United States of America', 'Florida': 'United States of America', 'Iowa': 'United States of America', 'Idaho': 'United States of America', 'Kansas': 'United States of America', 'Maryland': 'United States of America', 'Nebraska': 'United States of America', 'Virginia': 'United States of America', 'California': 'United States of America', 'Utah': 'United States of America', 'Indiana': 'United States of America', 'Vermont': 'United States of America', 'Oregon': 'United States of America', 'Maine': 'United States of America', 'Massachusetts': 'United States of America', 'Kentucky': 'United States of America', 'Oklahoma': 'United States of America', 'Colorado': 'United States of America', 'Mississippi': 'United States of America', 'Guam': 'United States of America', 'Bermuda': 'Bermuda', 'Ontario': 'Canada', 'Georgia': 'United States of America', 'Peru': 'Peru', 'Valparaiso': 'Chile', 'Santiago': 'Chile', 'Uruguay': 'Uruguay', 'Ecuador': 'Ecuador', 'Colombia': 'Colombia', 'Suriname': 'Suriname', 'Valdivia': 'Chile', 'Talca': 'Chile', 'Argentina': 'Argentina', 'Paraguay': 'Paraguay', 'Tocantins': 'Brazil', 'Bolivia': 'Bolivia', 'Trinidad': 'Trinidad and Tobago', 'Guyane': 'France', 'Venezuela': 'Venezuela', 'Para': 'Brazil', 'Brazil': 'Brazil', 'SantaCatarina': 'Brazil', 'PuertoMontt': 'Chile', 'VinaDelMar': 'Chile', 'Parana': 'Brazil', 'Paraiba': 'Brazil', 'Tucuman': 'Argentina', 'Roraima': 'Brazil', 'Pernambuco': 'Brazil', 'Goias': 'Brazil', 'Temuco': 'Chile', 'Concepcion': 'Chile', 'Rancagua': 'Chile', 'Arica': 'Chile', 'Chile': 'Chile', 'Guyana': 'Guyana', 'Guatemala': 'Guatemala', 'Honduras': 'Honduras', 'Martinique': 'France', 'Vina': 'Chile', 'Netherlands': 'Netherlands', 'Norway': 'Norway', 'Switzerland': 'Switzerland', 'Finland': 'Finland', 'Austria': 'Austria', 'Ukraine': 'Ukraine', 'Iceland': 'Iceland', 'Ireland': 'Ireland', 'Bulgaria': 'Bulgaria', 'Estonia': 'Estonia', 'Romania': 'Romania', 'Stockholm': 'Sweden', 'England': 'United Kingdom', 'Denmark': 'Denmark', 'Slovenia': 'Slovenia', 'Luxembourg': 'Luxembourg', 'Sweden': 'Sweden', 'Belgium': 'Belgium', 'Serbia': 'Serbia', 'Spain': 'Spain', 'Greece': 'Greece', 'Albania': 'Albania', 'Croatia': 'Croatia', 'Hungary': 'Hungary', 'Moldova': 'Moldova', 'Latvia': 'Latvia', 'Macedonia': 'North Macedonia', 'Lithuania': 'Lithuania', 'Poland': 'Poland', 'Portugal': 'Portugal', 'France': 'France', 'Lisbon': 'Portugal', 'Bretagne': 'France', 'Toulon': 'France', 'Madrid': 'Spain', 'Catalonia': 'Spain', 'Scotland': 'United Kingdom', 'Thuringen': 'Germany', 'Wrexham': 'United Kingdom', 'Montenegro': 'Montenegro', 'Kosovo': 'Kosovo', 'Slovakia': 'Slovakia', 'Poprad': 'Slovakia', 'Sturovo': 'Slovakia', 'Trnava': 'Slovakia', 'Iasi': 'Romania', 'Constanta': 'Romania', 'Maramures': 'Romania', 'Romania_SV': 'Romania', 'Vologda': 'Russia', 'Moscow': 'Russia', 'Yekaterinburg': 'Russia', 'Vladivostok': 'Russia', 'Stavropol': 'Russia', 'Kyiv': 'Ukraine', 'Tyumen': 'Russia', 'Voronezh': 'Russia', 'Vladimir': 'Russia', 'Yakutia': 'Russia', 'Tula': 'Russia', 'Khakassia': 'Russia', 'Orenburg': 'Russia', 'Ordu': 'Turkey', 'Zonguldak': 'Turkey', 'Germany': 'Germany', 'Hessen': 'Germany', 'Bremen': 'Germany', 'Sachsen': 'Germany', 'Rome': 'Italy', 'Parma': 'Italy', 'Palermo': 'Italy', 'Trieste': 'Italy', 'Ancona': 'Italy', 'Veneto': 'Italy', 'Pordenone': 'Italy', 'Trapani': 'Italy', 'Paris': 'France', 'Lyon': 'France', 'Grenoble': 'France', 'Rennes': 'France', 'Moulins': 'France', 'Picardie': 'France', 'Glasgow': 'United Kingdom', 'Swansea': 'United Kingdom', 'Tenby': 'United Kingdom', 'Ystrad': 'United Kingdom', 'Mold': 'United Kingdom', 'Ystad': 'Sweden', 'Visby': 'Sweden', 'Vaxjo': 'Sweden', 'Trollhattan': 'Sweden', 'Vasteras': 'Sweden', 'Uppsala': 'Sweden', 'Murcia': 'Spain', 'Navarra': 'Spain', 'Zamora': 'Spain', 'Valencia': 'Spain', 'LaRioja': 'Spain', 'Leon': 'Spain', 'Galicia': 'Spain', 'Valladolid': 'Spain', 'Athens': 'Greece', 'Heraklion': 'Greece', 'Malta': 'Malta', 'Yokohama': 'Japan', 'Vietnam': 'Vietnam', 'HongKong': 'China', 'SriLanka': 'Sri Lanka', 'Bangladesh': 'Bangladesh', 'Singapore': 'Singapore', 'Maldives': 'Maldives', 'Tokyo': 'Japan', 'India': 'India', 'Bhutan': 'Bhutan', 'Lao': 'Laos', 'Thailand': 'Thailand', 'Taiwan': 'Taiwan', 'Nepal': 'Nepal', 'Philippines': 'Philippines', 'Bahrain': 'Bahrain', 'Zhejiang-Shangcheng': 'China', 'Zhejiang-Nanhu': 'China', 'SuratThani': 'Thailand', 'Yamaguchi': 'Japan', 'Cambodia': 'Cambodia', 'Kanagawa': 'Japan', 'Yunnan-Wenshan': 'China', 'Yokosuka': 'Japan', 'Saitama': 'Japan', 'Nonthaburi': 'Thailand', 'Shanghai': 'China', 'Wuhan': 'China', 'Seoul': 'South Korea', 'Pakistan': 'Pakistan', 'Afghanistan': 'Afghanistan', 'SaudiArabia': 'Saudi Arabia', 'AbuDhabi': 'United Arab Emirates', 'Abudhabi': 'United Arab Emirates', 'Oman': 'Oman', 'Lebanon': 'Lebanon', 'Ulaanbaatar': 'Mongolia', 'Kazakhstan': 'Kazakhstan', 'Choibalsan': 'Mongolia', 'Zamyn-Uud': 'Mongolia', 'Uvs': 'Mongolia', 'Zavkhan': 'Mongolia', 'Brunei': 'Brunei', 'Indonesia': 'Indonesia', 'Myanmar': 'Myanmar', 'Yangon': 'Myanmar', 'Phuket': 'Thailand', 'Yasothon': 'Thailand', 'Trang': 'Thailand', 'Lopburi': 'Thailand', 'Chanthaburi': 'Thailand', 'Loei': 'Thailand', 'Ranong': 'Thailand', 'ChonBuri': 'Thailand', 'Mahasarakham': 'Thailand', 'Nakhonphanom': 'Thailand', 'ChiangRai': 'Thailand', 'Tehran': 'Iran', 'Varamin': 'Iran', 'Kuwait': 'Kuwait', 'Qatar': 'Qatar', 'SouthKorea': 'South Korea', 'Ulsan': 'South Korea', 'Kobe': 'Japan', 'Beijing': 'China', 'Tianjin-Hexi': 'China', 'Tianjin-Nankai': 'China', 'Sichuan-Gaoxin': 'China', 'Sichuan-Qingyang': 'China', 'Sichuan-Ziliujing': 'China', 'Sichuan-Jinjiang': 'China', 'Yunnan-Linxiang': 'China', 'Yunnan-Xianggelila': 'China', 'Yunnan-Zhaoyang': 'China', 'Yunnan-Zhenxiong': 'China', 'Yunnan-Chuxiong': 'China', 'Yunnan-Gucheng': 'China', 'Yunnan-Qilin': 'China', 'Yunnan-Xishan': 'China', 'Zhejiang-Haishu': 'China', 'Zhejiang-Nanxun': 'China', 'Zhejiang-Yongkang': 'China', 'Zhejiang-yongkang': 'China', 'Zhejiang-NH': 'China', 'Zhejiang-Tongxiang': 'China', 'Zhejiang-Yiwu': 'China', 'Zhejiang-Xihu': 'China', 'Zhejiang-Jiaojiang': 'China', 'Zhejiang-Xiuzhou': 'China', 'Zhejiang-Lucheng': 'China', 'Jiangxi-Donghu': 'China', 'Jiangxi-Zhushan': 'China', 'Jilin-Ningjiang': 'China', 'Guangxi': 'China', 'Guangxi-Fangcheng': 'China', 'Guangxi-Longzhou': 'China', 'Guangdong-Zhongshan': 'China', 'Guangdong-Zhenjiang': 'China', 'Hunan-yanfeng': 'China', 'Henan-Shihe': 'China', 'Fujian-Xinluo': 'China', 'Fujian-Pinghe': 'China', 'Fujian-Yanping': 'China', 'Anhui-Jinan': 'China', 'Guizhou-Nanming': 'China', 'Shaanxi-Hanbin': 'China', 'Xinjiang-Changji': 'China', 'Qinghai-Tongren': 'China', 'Beijing-Huairou': 'China', 'Beijing-Chaoyang': 'China', 'Shanghai-Putuo': 'China', 'Shanghai-Fengxian': 'China', 'Sapporo': 'Japan', 'Sendai': 'Japan', 'Sendai-H': 'Japan', 'Yamagata': 'Japan', 'Yamanashi': 'Japan', 'Wakayama': 'Japan', 'Wakayama-C': 'Japan', 'Shizuoka': 'Japan', 'Shizuoka-C': 'Japan', 'Miyazaki': 'Japan', 'Miyagi': 'Japan', 'Nagano': 'Japan', 'Okinawa': 'Japan', 'Kitakyushu': 'Japan', 'Kawasaki': 'Japan', 'Toyama': 'Japan', 'Tochigi': 'Japan', 'Odisha': 'India', 'Anantnag': 'India', 'Sidon': 'Lebanon', 'Zahle': 'Lebanon', 'Zgharta': 'Lebanon', 'Muscat': 'Oman', 'Salalah': 'Oman', 'Sharjah': 'United Arab Emirates', 'Fujairah': 'United Arab Emirates', 'Uaq': 'United Arab Emirates', 'Turkmenistan': 'Turkmenistan', 'Zhetysu': 'Kazakhstan', 'SouthAfrica': 'South Africa', 'Zambia': 'Zambia', 'Togo': 'Togo', 'Kenya': 'Kenya', 'Ghana': 'Ghana', 'Niger': 'Niger', 'Mali': 'Mali', 'Uganda': 'Uganda', 'Mozambique': 'Mozambique', 'Tunisia': 'Tunisia', 'BurkinaFaso': 'Burkina Faso', 'Congo': 'Dem. Rep. Congo', 'Cameroon': 'Cameroon', 'Nigeria': 'Nigeria', 'Ethiopia': 'Ethiopia', 'Tanzania': 'Tanzania', 'Madagascar': 'Madagascar', 'Antananarivo': 'Madagascar', 'Tsaralalana': 'Madagascar', 'Tanger': 'Morocco', 'Yaounde': 'Cameroon', 'Johannesburg': 'South Africa', 'Southafrica': 'South Africa', 'South-Africa': 'South Africa', 'Mayotte': 'France', 'Reunion': 'France', 'Victoria': 'Australia', 'Wellington': 'New Zealand', 'Sydney': 'Australia', 'Darwin': 'Australia', 'Brisbane': 'Australia', 'Perth': 'Australia', 'Tasmania': 'Australia', 'Townsville': 'Australia', 'Canberra': 'Australia', 'Newcastle': 'Australia', 'Christchurch': 'New Zealand', 'Waikato': 'New Zealand', 'Wairarapa': 'New Zealand', 'Canterbury': 'New Zealand', 'Fiji': 'Fiji', 'Papeete': 'France', 'Samoa': 'Samoa', 'NorthCarolina': 'United States of America', 'NewJersey': 'United States of America', 'NewMexico': 'United States of America', 'SouthDakota': 'United States of America', 'NorthDakota': 'United States of America', 'SouthCarolina': 'United States of America', 'RhodeIsland': 'United States of America', 'DistrictOfColumbia': 'United States of America', 'SaoPaulo': 'Brazil', 'Saopaulo': 'Brazil', 'MinasGerais': 'Brazil', 'RioGrandedoNorte': 'Brazil', 'RioGrandeDoNorte': 'Brazil', 'RioGrandedoSul': 'Brazil', 'AltoHospicio': 'Chile', 'StPetersburg': 'Russia', 'YoshkarOla': 'Russia', 'VelikyNovgorod': 'Russia', 'CzechRepublic': 'Czech Republic', 'FrancheComte': 'France', 'NorthernIreland': 'United Kingdom', 'UnitedKingdom': 'United Kingdom', 'BosniaHerzegovina': 'Bosnia and Herzegovina', 'BanskaBystrica': 'Slovakia', 'SchleswigHolstein': 'Germany', 'StEtienne': 'France', 'ValencianCommunity': 'Spain', 'Srinigar': 'India', 'TimorLeste': 'Timor-Leste', 'PhraNakhonSiAyutthaya': 'Thailand', 'Yunnan-Mengliandaizulahuzuwazuzizhi': 'China', 'Zhejiang-Wuxin': 'China', 'Zhejiang-TX': 'China', 'Zhejiang-Zhangxing': 'China', 'Hainan-Baotinglizumiaozuzizhi': 'China', 'Guizhou-Yilongxin': 'China', 'WuhanQiaokou': 'China', 'MountLebanon': 'Lebanon', 'RasAlKhaimah': 'United Arab Emirates', 'UmmAlQuwain': 'United Arab Emirates', 'CoteDIvoire': "Côte d'Ivoire", 'NosyBe': 'Madagascar', 'SouthAustralia': 'Australia', 'WesternAustralia': 'Australia', 'NorthernTerritory': 'Australia', 'NewZealand': 'New Zealand', 'SouthAuckland': 'New Zealand', 'Southauckland': 'New Zealand', 'NewCaledonia': 'France', 'SolomonIslands': 'Solomon Islands'} 
+// Maps each location token to its sovereign country name, used to cross-link
+// a hovered tree node to the corresponding country on the choropleth map.
+const location_country = {'Wisconsin': 'United States of America', 'Pennsylvania': 'United States of America', 'Alaska': 'United States of America', 'Michigan': 'United States of America', 'Texas': 'United States of America', 'Washington': 'United States of America', 'Wyoming': 'United States of America', 'Minnesota': 'United States of America', 'Hawaii': 'United States of America', 'Nevada': 'United States of America', 'Ohio': 'United States of America', 'Montana': 'United States of America', 'Arizona': 'United States of America', 'Delaware': 'United States of America', 'Florida': 'United States of America', 'Iowa': 'United States of America', 'Idaho': 'United States of America', 'Kansas': 'United States of America', 'Maryland': 'United States of America', 'Nebraska': 'United States of America', 'Virginia': 'United States of America', 'California': 'United States of America', 'Utah': 'United States of America', 'Indiana': 'United States of America', 'Vermont': 'United States of America', 'Oregon': 'United States of America', 'Maine': 'United States of America', 'Massachusetts': 'United States of America', 'Kentucky': 'United States of America', 'Oklahoma': 'United States of America', 'Colorado': 'United States of America', 'Mississippi': 'United States of America', 'Guam': 'United States of America', 'Bermuda': 'Bermuda', 'Ontario': 'Canada', 'Georgia': 'United States of America', 'Peru': 'Peru', 'Valparaiso': 'Chile', 'Santiago': 'Chile', 'Uruguay': 'Uruguay', 'Ecuador': 'Ecuador', 'Colombia': 'Colombia', 'Suriname': 'Suriname', 'Valdivia': 'Chile', 'Talca': 'Chile', 'Argentina': 'Argentina', 'Paraguay': 'Paraguay', 'Tocantins': 'Brazil', 'Bolivia': 'Bolivia', 'Trinidad': 'Trinidad and Tobago', 'Guyane': 'France', 'Venezuela': 'Venezuela', 'Para': 'Brazil', 'Brazil': 'Brazil', 'SantaCatarina': 'Brazil', 'PuertoMontt': 'Chile', 'VinaDelMar': 'Chile', 'Parana': 'Brazil', 'Paraiba': 'Brazil', 'Tucuman': 'Argentina', 'Roraima': 'Brazil', 'Pernambuco': 'Brazil', 'Goias': 'Brazil', 'Temuco': 'Chile', 'Concepcion': 'Chile', 'Rancagua': 'Chile', 'Arica': 'Chile', 'Chile': 'Chile', 'Guyana': 'Guyana', 'Guatemala': 'Guatemala', 'Honduras': 'Honduras', 'Martinique': 'France', 'Vina': 'Chile', 'Netherlands': 'Netherlands', 'Norway': 'Norway', 'Switzerland': 'Switzerland', 'Finland': 'Finland', 'Austria': 'Austria', 'Ukraine': 'Ukraine', 'Iceland': 'Iceland', 'Ireland': 'Ireland', 'Bulgaria': 'Bulgaria', 'Estonia': 'Estonia', 'Romania': 'Romania', 'Stockholm': 'Sweden', 'England': 'United Kingdom', 'Denmark': 'Denmark', 'Slovenia': 'Slovenia', 'Luxembourg': 'Luxembourg', 'Sweden': 'Sweden', 'Belgium': 'Belgium', 'Serbia': 'Serbia', 'Spain': 'Spain', 'Greece': 'Greece', 'Albania': 'Albania', 'Croatia': 'Croatia', 'Hungary': 'Hungary', 'Moldova': 'Moldova', 'Latvia': 'Latvia', 'Macedonia': 'North Macedonia', 'Lithuania': 'Lithuania', 'Poland': 'Poland', 'Portugal': 'Portugal', 'France': 'France', 'Lisbon': 'Portugal', 'Bretagne': 'France', 'Toulon': 'France', 'Madrid': 'Spain', 'Catalonia': 'Spain', 'Scotland': 'United Kingdom', 'Thuringen': 'Germany', 'Wrexham': 'United Kingdom', 'Montenegro': 'Montenegro', 'Kosovo': 'Kosovo', 'Slovakia': 'Slovakia', 'Poprad': 'Slovakia', 'Sturovo': 'Slovakia', 'Trnava': 'Slovakia', 'Iasi': 'Romania', 'Constanta': 'Romania', 'Maramures': 'Romania', 'Romania_SV': 'Romania', 'Vologda': 'Russia', 'Moscow': 'Russia', 'Yekaterinburg': 'Russia', 'Vladivostok': 'Russia', 'Stavropol': 'Russia', 'Kyiv': 'Ukraine', 'Tyumen': 'Russia', 'Voronezh': 'Russia', 'Vladimir': 'Russia', 'Yakutia': 'Russia', 'Tula': 'Russia', 'Khakassia': 'Russia', 'Orenburg': 'Russia', 'Ordu': 'Turkey', 'Zonguldak': 'Turkey', 'Germany': 'Germany', 'Hessen': 'Germany', 'Bremen': 'Germany', 'Sachsen': 'Germany', 'Rome': 'Italy', 'Parma': 'Italy', 'Palermo': 'Italy', 'Trieste': 'Italy', 'Ancona': 'Italy', 'Veneto': 'Italy', 'Pordenone': 'Italy', 'Trapani': 'Italy', 'Paris': 'France', 'Lyon': 'France', 'Grenoble': 'France', 'Rennes': 'France', 'Moulins': 'France', 'Picardie': 'France', 'Glasgow': 'United Kingdom', 'Swansea': 'United Kingdom', 'Tenby': 'United Kingdom', 'Ystrad': 'United Kingdom', 'Mold': 'United Kingdom', 'Ystad': 'Sweden', 'Visby': 'Sweden', 'Vaxjo': 'Sweden', 'Trollhattan': 'Sweden', 'Vasteras': 'Sweden', 'Uppsala': 'Sweden', 'Murcia': 'Spain', 'Navarra': 'Spain', 'Zamora': 'Spain', 'Valencia': 'Spain', 'LaRioja': 'Spain', 'Leon': 'Spain', 'Galicia': 'Spain', 'Valladolid': 'Spain', 'Athens': 'Greece', 'Heraklion': 'Greece', 'Malta': 'Malta', 'Yokohama': 'Japan', 'Vietnam': 'Vietnam', 'HongKong': 'China', 'SriLanka': 'Sri Lanka', 'Bangladesh': 'Bangladesh', 'Singapore': 'Singapore', 'Maldives': 'Maldives', 'Tokyo': 'Japan', 'India': 'India', 'Bhutan': 'Bhutan', 'Lao': 'Laos', 'Thailand': 'Thailand', 'Taiwan': 'Taiwan', 'Nepal': 'Nepal', 'Philippines': 'Philippines', 'Bahrain': 'Bahrain', 'Zhejiang-Shangcheng': 'China', 'Zhejiang-Nanhu': 'China', 'SuratThani': 'Thailand', 'Yamaguchi': 'Japan', 'Cambodia': 'Cambodia', 'Kanagawa': 'Japan', 'Yunnan-Wenshan': 'China', 'Yokosuka': 'Japan', 'Saitama': 'Japan', 'Nonthaburi': 'Thailand', 'Shanghai': 'China', 'Wuhan': 'China', 'Seoul': 'South Korea', 'Pakistan': 'Pakistan', 'Afghanistan': 'Afghanistan', 'SaudiArabia': 'Saudi Arabia', 'AbuDhabi': 'United Arab Emirates', 'Abudhabi': 'United Arab Emirates', 'Oman': 'Oman', 'Lebanon': 'Lebanon', 'Ulaanbaatar': 'Mongolia', 'Kazakhstan': 'Kazakhstan', 'Choibalsan': 'Mongolia', 'Zamyn-Uud': 'Mongolia', 'Uvs': 'Mongolia', 'Zavkhan': 'Mongolia', 'Brunei': 'Brunei', 'Indonesia': 'Indonesia', 'Myanmar': 'Myanmar', 'Yangon': 'Myanmar', 'Phuket': 'Thailand', 'Yasothon': 'Thailand', 'Trang': 'Thailand', 'Lopburi': 'Thailand', 'Chanthaburi': 'Thailand', 'Loei': 'Thailand', 'Ranong': 'Thailand', 'ChonBuri': 'Thailand', 'Mahasarakham': 'Thailand', 'Nakhonphanom': 'Thailand', 'ChiangRai': 'Thailand', 'Tehran': 'Iran', 'Varamin': 'Iran', 'Kuwait': 'Kuwait', 'Qatar': 'Qatar', 'SouthKorea': 'South Korea', 'Ulsan': 'South Korea', 'Kobe': 'Japan', 'Beijing': 'China', 'Tianjin-Hexi': 'China', 'Tianjin-Nankai': 'China', 'Sichuan-Gaoxin': 'China', 'Sichuan-Qingyang': 'China', 'Sichuan-Ziliujing': 'China', 'Sichuan-Jinjiang': 'China', 'Yunnan-Linxiang': 'China', 'Yunnan-Xianggelila': 'China', 'Yunnan-Zhaoyang': 'China', 'Yunnan-Zhenxiong': 'China', 'Yunnan-Chuxiong': 'China', 'Yunnan-Gucheng': 'China', 'Yunnan-Qilin': 'China', 'Yunnan-Xishan': 'China', 'Zhejiang-Haishu': 'China', 'Zhejiang-Nanxun': 'China', 'Zhejiang-Yongkang': 'China', 'Zhejiang-yongkang': 'China', 'Zhejiang-NH': 'China', 'Zhejiang-Tongxiang': 'China', 'Zhejiang-Yiwu': 'China', 'Zhejiang-Xihu': 'China', 'Zhejiang-Jiaojiang': 'China', 'Zhejiang-Xiuzhou': 'China', 'Zhejiang-Lucheng': 'China', 'Jiangxi-Donghu': 'China', 'Jiangxi-Zhushan': 'China', 'Jilin-Ningjiang': 'China', 'Guangxi': 'China', 'Guangxi-Fangcheng': 'China', 'Guangxi-Longzhou': 'China', 'Guangdong-Zhongshan': 'China', 'Guangdong-Zhenjiang': 'China', 'Hunan-yanfeng': 'China', 'Henan-Shihe': 'China', 'Fujian-Xinluo': 'China', 'Fujian-Pinghe': 'China', 'Fujian-Yanping': 'China', 'Anhui-Jinan': 'China', 'Guizhou-Nanming': 'China', 'Shaanxi-Hanbin': 'China', 'Xinjiang-Changji': 'China', 'Qinghai-Tongren': 'China', 'Beijing-Huairou': 'China', 'Beijing-Chaoyang': 'China', 'Shanghai-Putuo': 'China', 'Shanghai-Fengxian': 'China', 'Sapporo': 'Japan', 'Sendai': 'Japan', 'Sendai-H': 'Japan', 'Yamagata': 'Japan', 'Yamanashi': 'Japan', 'Wakayama': 'Japan', 'Wakayama-C': 'Japan', 'Shizuoka': 'Japan', 'Shizuoka-C': 'Japan', 'Miyazaki': 'Japan', 'Miyagi': 'Japan', 'Nagano': 'Japan', 'Okinawa': 'Japan', 'Kitakyushu': 'Japan', 'Kawasaki': 'Japan', 'Toyama': 'Japan', 'Tochigi': 'Japan', 'Odisha': 'India', 'Anantnag': 'India', 'Sidon': 'Lebanon', 'Zahle': 'Lebanon', 'Zgharta': 'Lebanon', 'Muscat': 'Oman', 'Salalah': 'Oman', 'Sharjah': 'United Arab Emirates', 'Fujairah': 'United Arab Emirates', 'Uaq': 'United Arab Emirates', 'Turkmenistan': 'Turkmenistan', 'Zhetysu': 'Kazakhstan', 'SouthAfrica': 'South Africa', 'Zambia': 'Zambia', 'Togo': 'Togo', 'Kenya': 'Kenya', 'Ghana': 'Ghana', 'Niger': 'Niger', 'Mali': 'Mali', 'Uganda': 'Uganda', 'Mozambique': 'Mozambique', 'Tunisia': 'Tunisia', 'BurkinaFaso': 'Burkina Faso', 'Congo': 'Dem. Rep. Congo', 'Cameroon': 'Cameroon', 'Nigeria': 'Nigeria', 'Ethiopia': 'Ethiopia', 'Tanzania': 'Tanzania', 'Madagascar': 'Madagascar', 'Antananarivo': 'Madagascar', 'Tsaralalana': 'Madagascar', 'Tanger': 'Morocco', 'Yaounde': 'Cameroon', 'Johannesburg': 'South Africa', 'Southafrica': 'South Africa', 'South-Africa': 'South Africa', 'Mayotte': 'France', 'Reunion': 'France', 'Victoria': 'Australia', 'Wellington': 'New Zealand', 'Sydney': 'Australia', 'Darwin': 'Australia', 'Brisbane': 'Australia', 'Perth': 'Australia', 'Tasmania': 'Australia', 'Townsville': 'Australia', 'Canberra': 'Australia', 'Newcastle': 'Australia', 'Christchurch': 'New Zealand', 'Waikato': 'New Zealand', 'Wairarapa': 'New Zealand', 'Canterbury': 'New Zealand', 'Fiji': 'Fiji', 'Papeete': 'France', 'Samoa': 'Samoa', 'NorthCarolina': 'United States of America', 'NewJersey': 'United States of America', 'NewMexico': 'United States of America', 'SouthDakota': 'United States of America', 'NorthDakota': 'United States of America', 'SouthCarolina': 'United States of America', 'RhodeIsland': 'United States of America', 'DistrictOfColumbia': 'United States of America', 'SaoPaulo': 'Brazil', 'Saopaulo': 'Brazil', 'MinasGerais': 'Brazil', 'RioGrandedoNorte': 'Brazil', 'RioGrandeDoNorte': 'Brazil', 'RioGrandedoSul': 'Brazil', 'AltoHospicio': 'Chile', 'StPetersburg': 'Russia', 'YoshkarOla': 'Russia', 'VelikyNovgorod': 'Russia', 'CzechRepublic': 'Czech Republic', 'FrancheComte': 'France', 'NorthernIreland': 'United Kingdom', 'UnitedKingdom': 'United Kingdom', 'BosniaHerzegovina': 'Bosnia and Herzegovina', 'BanskaBystrica': 'Slovakia', 'SchleswigHolstein': 'Germany', 'StEtienne': 'France', 'ValencianCommunity': 'Spain', 'Srinigar': 'India', 'TimorLeste': 'Timor-Leste', 'PhraNakhonSiAyutthaya': 'Thailand', 'Yunnan-Mengliandaizulahuzuwazuzizhi': 'China', 'Zhejiang-Wuxin': 'China', 'Zhejiang-TX': 'China', 'Zhejiang-Zhangxing': 'China', 'Hainan-Baotinglizumiaozuzizhi': 'China', 'Guizhou-Yilongxin': 'China', 'WuhanQiaokou': 'China', 'MountLebanon': 'Lebanon', 'RasAlKhaimah': 'United Arab Emirates', 'UmmAlQuwain': 'United Arab Emirates', 'CoteDIvoire': "Côte d'Ivoire", 'NosyBe': 'Madagascar', 'SouthAustralia': 'Australia', 'WesternAustralia': 'Australia', 'NorthernTerritory': 'Australia', 'NewZealand': 'New Zealand', 'SouthAuckland': 'New Zealand', 'Southauckland': 'New Zealand', 'NewCaledonia': 'France', 'SolomonIslands': 'Solomon Islands'};
+
+// Color palette for each world region, shared with the map legend.
 const regionColors = {
     "North America": "#e41a1c",
     "South America": "#ff7f00",
@@ -146,6 +170,14 @@ const regionColors = {
     "Unknown": "#cccccc"
 };
 
+/**
+ * Extracts the world region for a given strain name.
+ * Strain names follow the WHO convention: A/<Location>/…
+ * Returns "Unknown" if the location token is unrecognized.
+ *
+ * @param {string} name - Full strain name (e.g. "A/Wisconsin/87/2005").
+ * @returns {string} Region label.
+ */
 function getRegion(name) {
     if (!name) return "Unknown";
     const match = name.match(/^A\/([^\/]+)\//);
@@ -153,16 +185,26 @@ function getRegion(name) {
     return regionMap[match[1]] || "Unknown";
 }
 
+// === CLADE DEFINITIONS ===
+// Named H3N2 antigenic clades with their approximate year ranges and colors.
+// Used by the collapsed view and clade-coloring mode.
 const cladeDefinitions = [
-    { name: "3C", startYear: 2008, endYear: 2013, color: "#888888" },
-    { name: "3C.2a", startYear: 2014, endYear: 2015, color: "#e41a1c" },
-    { name: "3C.3a", startYear: 2015, endYear: 2018, color: "#ff7f00" },
-    { name: "3C.2a1", startYear: 2016, endYear: 2019, color: "#4daf4a" },
-    { name: "3C.2a1b", startYear: 2019, endYear: 2022, color: "#377eb8" },
-    { name: "2a.1b.2a", startYear: 2022, endYear: 2024, color: "#984ea3" },
-    { name: "2a.1b.2b", startYear: 2024, endYear: 2027, color: "#a65628" },
+    { name: "3C",        startYear: 2008, endYear: 2013, color: "#888888" },
+    { name: "3C.2a",     startYear: 2014, endYear: 2015, color: "#e41a1c" },
+    { name: "3C.3a",     startYear: 2015, endYear: 2018, color: "#ff7f00" },
+    { name: "3C.2a1",    startYear: 2016, endYear: 2019, color: "#4daf4a" },
+    { name: "3C.2a1b",   startYear: 2019, endYear: 2022, color: "#377eb8" },
+    { name: "2a.1b.2a",  startYear: 2022, endYear: 2024, color: "#984ea3" },
+    { name: "2a.1b.2b",  startYear: 2024, endYear: 2027, color: "#a65628" },
 ];
 
+/**
+ * Returns the clade definition object for a given leaf node, based on the
+ * collection year embedded in its strain name.
+ *
+ * @param {d3.HierarchyNode} leaf - A D3 leaf node with a data.name strain string.
+ * @returns {{ name: string, color: string }} Matching clade, or "Unknown".
+ */
 function getCladeForLeaf(leaf) {
     const year = extractYear(leaf.data.name);
     if (!year) return { name: "Unknown", color: "#cccccc" };
@@ -172,18 +214,36 @@ function getCladeForLeaf(leaf) {
     return { name: "Unknown", color: "#cccccc" };
 }
 
+// =============================================================================
+// Newick parser — converts a Newick-format string into a nested JS object tree
+// compatible with d3.hierarchy().
+// =============================================================================
+
+/**
+ * Parses a Newick-format string into a plain JS object tree.
+ * Each node may have { name, length, children }.
+ *
+ * @param {string} s - Newick string (must be terminated with a semicolon).
+ * @returns {object} Root node of the parsed tree.
+ */
 function parseNewick(s) {
     let ancestors = [], tree = {}, tokens = s.split(/\s*(;|\(|\)|,|:)\s*/);
     for (let i = 0; i < tokens.length; i++) {
         let token = tokens[i];
         switch (token) {
+            // Open paren: push current node onto the ancestor stack and start a child
             case '(': { let st = {}; tree.children = tree.children || []; tree.children.push(st); ancestors.push(tree); tree = st; break; }
+            // Comma: add a sibling to the current parent's children
             case ',': { let sb = {}; ancestors[ancestors.length - 1].children = ancestors[ancestors.length - 1].children || []; ancestors[ancestors.length - 1].children.push(sb); tree = sb; break; }
+            // Close paren: return to the parent node
             case ')': tree = ancestors.pop(); break;
+            // Colon introduces a branch length — handled by the default case below
             case ':': break;
             default: {
                 let prev = tokens[i - 1];
+                // Token following '(', ',', or ')' is a node label
                 if (prev == ')' || prev == '(' || prev == ',') tree.name = token;
+                // Token following ':' is a branch length (fractional years for timetrees)
                 else if (prev == ':') tree.length = parseFloat(token);
             }
         }
@@ -191,23 +251,55 @@ function parseNewick(s) {
     return tree;
 }
 
+/**
+ * Recursively computes absolute depths (cumulative branch lengths from root)
+ * for every node in the parsed Newick tree. Stores the result in node.depth.
+ *
+ * @param {object} node - Current node (plain JS object from parseNewick).
+ * @param {number} depth - Accumulated depth of the parent (default 0).
+ */
 function computeDepths(node, depth = 0) {
     node.depth = depth + (node.length || 0);
     if (node.children) node.children.forEach(child => computeDepths(child, node.depth));
 }
 
+/**
+ * Extracts the four-digit collection year from a standard WHO strain name.
+ * Handles egg-passaged strain suffixes (e.g. "…/2015-egg").
+ *
+ * @param {string} name - Strain name string.
+ * @returns {number|null} Year integer, or null if not found.
+ */
 function extractYear(name) {
     if (!name) return null;
     const match = name.match(/\/(\d{4})(?:-egg)?$/);
     return match ? parseInt(match[1]) : null;
 }
 
+// =============================================================================
+// drawTree — main rendering function
+// Called once after the Newick file is loaded.
+// =============================================================================
+
+/**
+ * Renders the full phylogenetic tree visualization inside #tree and #tree-axis.
+ * Sets up zoom/pan, node/link rendering, the year-sweep line, tooltip logic,
+ * and three view modes (tips, density, collapsed). Also exposes several
+ * window-level functions used by scroll.js and map.js for cross-view sync.
+ *
+ * @param {string} newickData - Raw Newick string loaded from the .nwk file.
+ */
 function drawTree(newickData) {
+    // Parse Newick and compute branch-length depths for every node
     const parsed = parseNewick(newickData);
     computeDepths(parsed);
     const root = d3.hierarchy(parsed, d => d.children);
 
+    // xScale maps branch-length depth [ROOT_OFFSET, MAX_DEPTH] → pixel x
     const xScale = d3.scaleLinear().domain([ROOT_OFFSET, MAX_DEPTH]).range([0, innerWidth]);
+
+    // Assign each leaf an evenly spaced y position, then propagate to internal
+    // nodes as the mean y of their children (standard rectangular cladogram layout).
     const leaves = root.leaves();
     const yScale = d3.scaleLinear().domain([0, leaves.length - 1]).range([0, innerHeight]);
     leaves.forEach((leaf, i) => { leaf.data._y = yScale(i); });
@@ -219,15 +311,22 @@ function drawTree(newickData) {
     }
     assignY(root);
 
+    // Convenience accessors for pixel coordinates of any node
     const getX = d => xScale(d.data.depth);
     const getY = d => d.data._y;
 
+    // === View state ===
+    // currentRevealX: pixel x of the vertical sweep line (controlled by year slider)
+    // activeRegions:  set of regions currently visible (controlled by legend clicks)
+    // colorMode:      "region" | "clade"
+    // treeViewMode:   "tips" | "density" | "collapsed"
     let currentRevealX = innerWidth;
     let activeRegions = new Set(["North America", "South America", "Europe", "Asia", "Africa", "Oceania"]);
     let colorMode = "region";
     let treeViewMode = "tips";
 
     // === SVG + ZOOM SETUP ===
+    // The outer SVG receives zoom events; the inner <g> is transformed by D3 zoom.
     const svgRoot = d3.select("#tree")
         .append("svg")
         .attr("width", width)
@@ -237,31 +336,35 @@ function drawTree(newickData) {
     const svg = svgRoot.append("g")
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
+    // D3 zoom behaviour — panning and scaling within defined extents.
+    // On each zoom event, also re-draws the time axis at the new scale.
     const zoom = d3.zoom()
         .scaleExtent([0.25, 8])
         .translateExtent([
-        [-width/2, -height],
-        [width*4.5, height*3]
+            [-width / 2, -height],
+            [width * 4.5, height * 3]
         ])
-        
-         .on("zoom", (event) => {
-        svg.attr("transform", event.transform);
+        .on("zoom", (event) => {
+            svg.attr("transform", event.transform);
 
-        const rescaledX = event.transform.rescaleX(xScale);
-        const zoomedAxis = d3.axisTop(rescaledX)
-            .tickValues(d3.range(0, YEARS_SPAN + 1).map(i => i + ROOT_OFFSET))
-            .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
-        axisG.call(zoomedAxis)
-        axisG.selectAll("text").attr("font-size", "11px");
-    });
+            // Rescale the x-axis to match the current zoom transform so tick
+            // positions stay aligned with the visible tree branches.
+            const rescaledX = event.transform.rescaleX(xScale);
+            const zoomedAxis = d3.axisTop(rescaledX)
+                .tickValues(d3.range(0, YEARS_SPAN + 1).map(i => i + ROOT_OFFSET))
+                .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
+            axisG.call(zoomedAxis);
+            axisG.selectAll("text").attr("font-size", "11px");
+        });
 
     svgRoot.call(zoom);
 
+    // Expose zoom reset so other modules can restore the default view
     window.resetZoom = function () {
         svgRoot.transition().duration(400).call(zoom.transform, d3.zoomIdentity.translate(0, 0).scale(1));
     };
 
-    // Prevent container scroll from interfering with zoom
+    // Prevent the page from scrolling when the user wheels over the tree container
     const treeContainer = document.getElementById("tree-container");
     if (treeContainer) {
         treeContainer.addEventListener("wheel", function (e) {
@@ -269,27 +372,51 @@ function drawTree(newickData) {
         }, { passive: false });
     }
 
+    // ==========================================================================
+    // Color helpers
+    // ==========================================================================
+
+    /**
+     * Determines the stroke color for a tree link based on the dominant region
+     * (or clade, depending on colorMode) among its descendent leaves.
+     *
+     * @param {d3.HierarchyLink} d - D3 link object.
+     * @returns {string} CSS color string.
+     */
     function getLinkColor(d) {
         const lv = d.target.leaves ? d.target.leaves() : [];
         if (lv.length === 0) return "#ccc";
+
         if (colorMode === "clade") {
+            // Count descendent leaves by clade, pick the most frequent
             const cc = {};
             lv.forEach(l => { const c = getCladeForLeaf(l).name; cc[c] = (cc[c] || 0) + 1; });
             const dom = Object.entries(cc).sort((a, b) => b[1] - a[1])[0][0];
             const cl = cladeDefinitions.find(c => c.name === dom);
             return cl ? cl.color : "#ccc";
         }
+
+        // Default: color by dominant region
         const rc = {};
         lv.forEach(l => { const r = getRegion(l.data.name); rc[r] = (rc[r] || 0) + 1; });
         const dom = Object.entries(rc).sort((a, b) => b[1] - a[1])[0][0];
         return regionColors[dom] || "#ccc";
     }
 
+    /**
+     * Returns the fill color for a leaf node circle.
+     *
+     * @param {d3.HierarchyNode} d - D3 node (leaf).
+     * @returns {string} CSS color string.
+     */
     function getNodeColor(d) {
         if (colorMode === "clade") return getCladeForLeaf(d).color;
         return regionColors[getRegion(d.data.name)] || regionColors["Unknown"];
     }
 
+    // ==========================================================================
+    // Draw branches (links) as L-shaped horizontal–then-vertical paths
+    // ==========================================================================
     svg.selectAll(".link")
         .data(root.links())
         .join("path")
@@ -297,10 +424,14 @@ function drawTree(newickData) {
         .attr("fill", "none")
         .attr("stroke-width", 0.8)
         .attr("stroke", d => getLinkColor(d))
+        // Elbow path: horizontal from parent x to child x, then vertical to child y
         .attr("d", d => `M${getX(d.source)},${getY(d.source)} H${getX(d.target)} V${getY(d.target)}`);
 
+    // ==========================================================================
+    // Draw leaf nodes as circles with hover tooltips
+    // ==========================================================================
     const node = svg.selectAll(".node")
-        .data(root.descendants().filter(d => !d.children))
+        .data(root.descendants().filter(d => !d.children)) // leaves only
         .join("g")
         .attr("class", "node")
         .attr("transform", d => `translate(${getX(d)},${getY(d)})`);
@@ -309,12 +440,15 @@ function drawTree(newickData) {
         .attr("r", 5)
         .attr("fill", d => getNodeColor(d))
         .on("mouseover", function (event, d) {
+            // Only show tooltip for nodes whose region is currently active
             if (!d.data.name || !activeRegions.has(getRegion(d.data.name))) return;
+
             const region = getRegion(d.data.name);
             const year = extractYear(d.data.name);
             const clade = getCladeForLeaf(d);
             const locationMatch = d.data.name.match(/^A\/([^\/]+)\//);
             const location = locationMatch ? locationMatch[1] : "Unknown";
+
             d3.select("#tooltip").style("display", "block").html(`
                 <div style="font-weight:bold;margin-bottom:4px;">H3N2 Influenza Sample</div>
                 <div>📍 Collected in: ${location}</div>
@@ -323,20 +457,31 @@ function drawTree(newickData) {
                 <div>🧬 Strain: ${d.data.name}</div>
                 <div>🌿 Clade: ${clade.name}</div>
             `);
+
+            // Enlarge circle for visual feedback
             d3.select(this).attr("r", 7).attr("stroke", "black").attr("stroke-width", 1.5);
+
+            // Cross-highlight the corresponding country on the choropleth map
             const countryName = location_country[location];
             if (countryName && window.highlightMapCountry) window.highlightMapCountry(countryName);
         })
         .on("mousemove", function (event) {
-            d3.select("#tooltip").style("left", (event.clientX + 12) + "px").style("top", (event.clientY - 28) + "px");
+            // Keep tooltip near the cursor as the user moves the mouse
+            d3.select("#tooltip")
+                .style("left", (event.clientX + 12) + "px")
+                .style("top", (event.clientY - 28) + "px");
         })
         .on("mouseout", function (event, d) {
             if (!activeRegions.has(getRegion(d.data.name))) return;
             d3.select("#tooltip").style("display", "none");
             d3.select(this).attr("r", 5).attr("stroke", "none");
+            // Remove the map highlight when the cursor leaves the node
             if (window.clearMapHighlight) window.clearMapHighlight();
         });
 
+    // ==========================================================================
+    // Vertical sweep line — marks the currently selected year on the tree
+    // ==========================================================================
     const sweepLine = svg.append("line")
         .attr("class", "sweep-line")
         .attr("x1", innerWidth).attr("x2", innerWidth)
@@ -344,34 +489,64 @@ function drawTree(newickData) {
         .attr("stroke", "#333").attr("stroke-width", 1.5)
         .attr("stroke-dasharray", "6,4").attr("opacity", 0.6);
 
+    // ==========================================================================
+    // Time axis — rendered in a separate <svg id="tree-axis"> above the tree
+    // so it stays fixed while the tree pans vertically.
+    // ==========================================================================
     const axisSvg = d3.select("#tree-axis").attr("width", width).attr("height", 40);
+
+    /**
+     * Creates a D3 top-axis generator for the time scale.
+     * Tick density scales with the zoom level (scale parameter).
+     *
+     * @param {number} scale - Current zoom scale factor.
+     * @returns {d3.Axis} Configured axis generator.
+     */
     function createXAxis(scale) {
         const tickCount = Math.max(3, Math.floor(15 * scale));
-
         return d3.axisTop(xScale)
             .ticks(tickCount)
             .tickFormat(d =>
+                // NOTE: Math.raound is a typo in the original — should be Math.round
                 Math.raound(ROOT_YEAR + (d - ROOT_OFFSET))
             );
     }
+
+    // Initial axis with one tick per year
     const xAxisTop = createXAxis(xScale)
         .tickValues(d3.range(ROOT_OFFSET, MAX_DEPTH, 1))
         .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
-
 
     const axisG = axisSvg.append("g")
         .attr("transform", `translate(${margin.left}, 35)`)
         .call(xAxisTop);
     axisG.selectAll("text").attr("font-size", "11px");
 
+    // ==========================================================================
+    // applyFilters — shows/hides nodes and links based on the sweep line
+    // position (year) and the active region set.
+    // ==========================================================================
+
+    /**
+     * Updates node and link opacity to reflect the current year (sweep line)
+     * and active region selection.
+     *
+     * @param {boolean} transition - Whether to animate the opacity change.
+     */
     function applyFilters(transition = true) {
         const t = transition ? d3.transition().duration(400).ease(d3.easeCubicInOut) : null;
         const nodes = d3.selectAll(".node circle");
         const links = d3.selectAll(".link");
+
+        // Hide nodes that are either in an inactive region or haven't been
+        // "revealed" by the sweep line yet (i.e. their depth is in the future).
         (transition ? nodes.transition(t) : nodes).attr("opacity", d => {
             if (!activeRegions.has(getRegion(d.data.name))) return 0;
             return getX(d) <= currentRevealX ? 1 : 0;
         });
+
+        // Links are fully visible if both endpoints are revealed, partially
+        // visible if they straddle the sweep line, and hidden if fully ahead.
         (transition ? links.transition(t) : links).attr("opacity", d => {
             const lv = d.target.leaves ? d.target.leaves() : [];
             const hasActive = lv.some(l => activeRegions.has(getRegion(l.data.name)));
@@ -379,22 +554,36 @@ function drawTree(newickData) {
             const sx = getX(d.source), tx = getX(d.target);
             if (tx <= currentRevealX) return 1;
             if (sx >= currentRevealX) return 0;
-            return 0.5;
+            return 0.5; // partially revealed link
         });
     }
 
-    // === DENSITY VIEW with legend ===
+    // ==========================================================================
+    // DENSITY VIEW
+    // Replaces individual nodes/links with a 2-D heatmap grid showing strain
+    // count density. Useful for getting an overview of temporal clustering.
+    // ==========================================================================
+
+    /**
+     * Switches the tree to density heatmap mode.
+     * Divides the visible canvas into a grid of cells, counts leaves in each
+     * cell, and colors cells by count using a yellow-orange-red scale.
+     * Also updates legend visibility.
+     */
     window.showDensityView = function () {
         treeViewMode = "density";
+        // Hide individual tree elements
         svg.selectAll(".link").style("display", "none");
         svg.selectAll(".node").style("display", "none");
         sweepLine.style("display", "none");
         svg.selectAll(".density-overlay").remove();
         svg.selectAll(".clade-group").remove();
 
+        // Only consider leaves up to the current sweep position
         const visibleLeaves = root.leaves().filter(leaf => getX(leaf) <= currentRevealX);
         if (visibleLeaves.length === 0) return;
 
+        // Build a 2-D grid of leaf counts (binCountX × binCountY cells)
         const binCountX = 60, binCountY = 40;
         const cellW = innerWidth / binCountX;
         const cellH = innerHeight / binCountY;
@@ -416,11 +605,15 @@ function drawTree(newickData) {
         const densityColor = d3.scaleSequential().domain([0, maxCount]).interpolator(d3.interpolateYlOrRd);
         const densityGroup = svg.append("g").attr("class", "density-overlay");
 
+        // Draw one rect per non-empty cell; attach tooltip on hover
         for (let xi = 0; xi < binCountX; xi++) {
             for (let yi = 0; yi < binCountY; yi++) {
                 const count = grid[xi][yi];
                 if (count === 0) continue;
+
                 const cellLeaves = gridLeaves[xi][yi];
+
+                // Summarize region distribution and year range for the tooltip
                 const regionCounts = {};
                 cellLeaves.forEach(l => { const r = getRegion(l.data.name); regionCounts[r] = (regionCounts[r] || 0) + 1; });
                 const topRegion = Object.entries(regionCounts).sort((a, b) => b[1] - a[1])[0];
@@ -443,7 +636,9 @@ function drawTree(newickData) {
                         `);
                     })
                     .on("mousemove", function (event) {
-                        d3.select("#tooltip").style("left", (event.clientX + 12) + "px").style("top", (event.clientY - 28) + "px");
+                        d3.select("#tooltip")
+                            .style("left", (event.clientX + 12) + "px")
+                            .style("top", (event.clientY - 28) + "px");
                     })
                     .on("mouseout", function () { d3.select("#tooltip").style("display", "none"); });
             }
@@ -454,13 +649,15 @@ function drawTree(newickData) {
         const legendX = innerWidth - legendW - 10;
         const legendY = innerHeight - 65;
 
+        // SVG gradient definition for the legend bar
         const defs = densityGroup.append("defs");
         const grad = defs.append("linearGradient").attr("id", "density-legend-grad");
         [0, 0.25, 0.5, 0.75, 1].forEach(t => {
             grad.append("stop").attr("offset", `${t * 100}%`).attr("stop-color", d3.interpolateYlOrRd(t));
         });
 
-        // show both legends
+        // Show density legends in both the tree-only and split-view panels;
+        // hide the region (dot) legend since region colors aren't shown here.
         document.getElementById("density-legend").style.display = "block";
         document.getElementById("density-legend-both").style.display = "block";
         const mid = Math.round(maxCount / 2);
@@ -470,7 +667,18 @@ function drawTree(newickData) {
         document.getElementById("region-legend-both").style.display = "none";
     };
 
-    // === COLLAPSED VIEW ===
+    // ==========================================================================
+    // COLLAPSED VIEW
+    // Replaces individual nodes/links with filled triangle polygons representing
+    // each named H3N2 clade. The triangle spans the x- and y-extents of the
+    // clade's visible leaves, giving an intuitive sense of clade size and spread.
+    // ==========================================================================
+
+    /**
+     * Switches the tree to collapsed clade view.
+     * Draws one triangular polygon per defined clade using the visible leaves
+     * that fall within its year range.
+     */
     window.showCollapsedView = function () {
         treeViewMode = "collapsed";
         svg.selectAll(".link").style("display", "none");
@@ -480,29 +688,41 @@ function drawTree(newickData) {
         svg.selectAll(".clade-group").remove();
 
         const visibleLeaves = root.leaves().filter(leaf => getX(leaf) <= currentRevealX);
+
+        // Swap to region dot legend (clade view retains region coloring in the UI)
         document.getElementById("density-legend").style.display = "none";
         document.getElementById("density-legend-both").style.display = "none";
         document.getElementById("region-legend").style.display = "block";
         document.getElementById("region-legend-both").style.display = "block";
 
         cladeDefinitions.forEach(clade => {
+            // Gather leaves that belong to this clade's year range
             const cladeLeaves = visibleLeaves.filter(leaf => {
                 const year = extractYear(leaf.data.name);
                 return year >= clade.startYear && year < clade.endYear;
             });
             if (cladeLeaves.length === 0) return;
 
+            // Compute bounding box of the clade's leaves in pixel space
             const xValues = cladeLeaves.map(getX), yValues = cladeLeaves.map(getY);
             const xMin = Math.min(...xValues), xMax = Math.max(...xValues);
             const yMin = Math.min(...yValues), yMax = Math.max(...yValues);
             const yMid = (yMin + yMax) / 2;
 
+            // Summarize region distribution for the tooltip
             const regionCounts = {};
             cladeLeaves.forEach(l => { const r = getRegion(l.data.name); regionCounts[r] = (regionCounts[r] || 0) + 1; });
-            const topRegions = Object.entries(regionCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([r, n]) => `${r}: ${n}`).join(", ");
+            const topRegions = Object.entries(regionCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([r, n]) => `${r}: ${n}`)
+                .join(", ");
 
             const g = svg.append("g").attr("class", "clade-group");
-            const points = [[xMin, yMid], [xMax, yMin], [xMax, yMax]].map(p => p.join(",")).join(" ");
+
+            // Triangle: tip at (xMin, yMid), base vertices at (xMax, yMin/yMax)
+            const points = [[xMin, yMid], [xMax, yMin], [xMax, yMax]]
+                .map(p => p.join(",")).join(" ");
 
             g.append("polygon").attr("points", points)
                 .attr("fill", clade.color).attr("opacity", 0.7)
@@ -516,16 +736,29 @@ function drawTree(newickData) {
                     `);
                 })
                 .on("mousemove", function (event) {
-                    d3.select("#tooltip").style("left", (event.clientX + 12) + "px").style("top", (event.clientY - 28) + "px");
+                    d3.select("#tooltip")
+                        .style("left", (event.clientX + 12) + "px")
+                        .style("top", (event.clientY - 28) + "px");
                 })
                 .on("mouseout", function () { d3.select("#tooltip").style("display", "none"); });
 
+            // Label positioned just to the right of the triangle's widest point
             g.append("text").attr("x", xMax + 8).attr("y", yMid + 4)
                 .attr("font-size", "11px").attr("font-weight", "bold").attr("fill", clade.color)
                 .text(`${clade.name} (n=${cladeLeaves.length})`);
         });
     };
 
+    // ==========================================================================
+    // TIPS VIEW (default)
+    // Shows every individual leaf as a circle and every branch as a line.
+    // ==========================================================================
+
+    /**
+     * Switches the tree back to the default individual-tips view.
+     * Re-enables all link and node elements, then re-runs updateTree to
+     * apply the current year filter.
+     */
     window.showAllTipsView = function () {
         treeViewMode = "tips";
         svg.selectAll(".density-overlay").remove();
@@ -541,31 +774,58 @@ function drawTree(newickData) {
         document.getElementById("region-legend-both").style.display = "block";
     };
 
+    // ==========================================================================
+    // Public API — exposed on window so scroll.js can call them
+    // ==========================================================================
+
+    /**
+     * Switches node and link colors between "region" and "clade" modes.
+     *
+     * @param {string} mode - "region" or "clade".
+     */
     window.setColorMode = function (mode) {
         colorMode = mode;
         d3.selectAll(".node circle").attr("fill", d => getNodeColor(d));
         d3.selectAll(".link").attr("stroke", d => getLinkColor(d));
     };
 
+    /**
+     * Advances the tree to a given calendar year by moving the sweep line to
+     * the corresponding x position and re-applying filters or re-drawing the
+     * active view mode.
+     *
+     * @param {number} year - Four-digit calendar year.
+     */
     window.updateTree = function (year) {
         year = +year;
+        // Convert the year to a branch-length depth, clamped to MAX_DEPTH
         const depth = ROOT_OFFSET + (year - ROOT_YEAR);
         currentRevealX = xScale(Math.min(depth, MAX_DEPTH));
+
         if (treeViewMode === "tips") {
+            // Animate the sweep line and fade nodes in/out
             sweepLine.transition().duration(600).ease(d3.easeCubicInOut)
                 .attr("x1", currentRevealX).attr("x2", currentRevealX);
             applyFilters(true);
         } else if (treeViewMode === "density") {
-            window.showDensityView();
+            window.showDensityView(); // Rebuild density grid for the new reveal position
         } else if (treeViewMode === "collapsed") {
-            window.showCollapsedView();
+            window.showCollapsedView(); // Rebuild clade polygons for the new reveal position
         }
     };
 
+    /**
+     * Updates the active region set and redraws node/link visibility accordingly.
+     *
+     * @param {Set<string>} regions - Set of region label strings to show.
+     */
     window.applyRegionFilter = function (regions) {
         activeRegions = regions;
         applyFilters(true);
     };
 }
 
+// =============================================================================
+// Entry point — load the Newick timetree file, then call drawTree.
+// =============================================================================
 d3.text("data/nextstrain_seasonal-flu_h3n2_ha_12y_timetree.nwk").then(data => { drawTree(data); });
