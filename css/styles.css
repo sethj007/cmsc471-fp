@@ -672,6 +672,7 @@ html, body {
 
 .intro-section-cta .intro-section-body {
     color: #aaa;
+    align-self: center;
 }
 
 .intro-section-cta .intro-cta {
@@ -683,6 +684,9 @@ html, body {
 .intro-section-inner {
     max-width: 900px;
     margin: 0 auto;
+     display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .intro-section-label {
