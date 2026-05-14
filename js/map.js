@@ -184,7 +184,7 @@ Promise.all([
             .text("No data");
 
         if (!window._maps) window._maps = {};
-        window._maps[containerId] = { svg, path, idToISO3, byCountryYear };
+        window._maps[containerId] = { svg, path, projection, idToISO3, byCountryYear };
 
         //reset to chloro selector
         window._mapViewMode[containerId] = "choropleth";
@@ -214,7 +214,8 @@ Promise.all([
                 const iso3 = idToISO3[+d.id];
                 const val = byCountryYear[`${iso3}-${year}`] || 0;
                 if (val === 0) return null;
-                const centroid = mapData.path.centroid(d);
+                const geoCenter = d3.geoCentroid(d);
+                const centroid = mapData.projection(geoCenter);
                 if (!centroid || isNaN(centroid[0])) return null;
                 return { iso3, val, centroid, name: d.properties?.name || iso3 };
             })
