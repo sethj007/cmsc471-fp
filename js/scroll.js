@@ -59,24 +59,28 @@ tabs.forEach(tab => {
                 treeBoth.appendChild(treeAxisEl);
                 treeBoth.appendChild(treeEl);
                 requestAnimationFrame(() => {
-                    const container = document.getElementById("both-tree-container");
-                    const containerWidth = container.clientWidth;
-                    const scale = (containerWidth / 2500) * 1.08;
                     treeEl.style.transform = `scale(${scale})`;
                     treeEl.style.transformOrigin = "top left";
                     treeAxisEl.style.transform = `scale(${scale})`;
                     treeAxisEl.style.transformOrigin = "top left";
-
-                    // compensate for scaled-down axis text
-                    const axisText = treeAxisEl.querySelectorAll("text");
-                    axisText.forEach(t => {
-                        t.style.fontSize = `${10 / scale}px`;
-                    });
-
+                    
                     // reset zoom/pan before split scaling
                     if (window.resetZoom) {
                         window.resetZoom();
                     }
+                    const container = document.getElementById("both-tree-container");
+                    const containerWidth = container.clientWidth;
+                    const scale = (containerWidth / 2500) * 1.08;
+                    // recompute ticks based on scale
+                    const axisG = d3.select(treeAxisEl).select("g");
+                    axisG.call(createXAxis(scale));
+                    // compensate for scaled-down axis text
+                    axisText.forEach(t => {
+                        t.style.transform = `scale(${1 / scale})`;
+                        t.style.transformOrigin = "left center";
+                    });
+
+
                     const currentYear = +document.getElementById("yearSlider").value;
                     if (window.updateTree) window.updateTree(currentYear);
                 });

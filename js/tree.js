@@ -238,29 +238,27 @@ function drawTree(newickData) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const zoom = d3.zoom()
-        .scaleExtent([0.5, 8])
+        .scaleExtent([0.3, 8])
         .translateExtent([
         [-200, -Infinity],
         [width*3, Infinity]
         ])
         
          .on("zoom", (event) => {
-        svg.attr("transform",
-            `translate(${event.transform.x + margin.left},${event.transform.y + margin.top}) scale(${event.transform.k})`
-        );
+        svg.attr("transform", event.transform);
 
         const rescaledX = event.transform.rescaleX(xScale);
         const zoomedAxis = d3.axisTop(rescaledX)
             .tickValues(d3.range(0, YEARS_SPAN + 1).map(i => i + ROOT_OFFSET))
             .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
-        axisG.call(zoomedAxis);
+        axisG.call(zoomedAxis)
         axisG.selectAll("text").attr("font-size", "11px");
     });
 
     svgRoot.call(zoom);
 
     window.resetZoom = function () {
-        svgRoot.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
+        svgRoot.transition().duration(400).call(zoom.transform, d3.zoomIdentity.translate(0, 0).scale(1));
     };
 
     // Prevent container scroll from interfering with zoom
@@ -347,7 +345,16 @@ function drawTree(newickData) {
         .attr("stroke-dasharray", "6,4").attr("opacity", 0.6);
 
     const axisSvg = d3.select("#tree-axis").attr("width", width).attr("height", 40);
-    const xAxisTop = d3.axisTop(xScale)
+    function createXAxis(scale) {
+        const tickCount = Math.max(3, Math.floor(15 * scale));
+
+        return d3.axisTop(xScale)
+            .ticks(tickCount)
+            .tickFormat(d =>
+                Math.raound(ROOT_YEAR + (d - ROOT_OFFSET))
+            );
+    }
+    const xAxisTop = createXAxis(xScale)
         .tickValues(d3.range(ROOT_OFFSET, MAX_DEPTH, 1))
         .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
 
