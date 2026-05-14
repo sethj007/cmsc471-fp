@@ -8,7 +8,7 @@ const innerHeight = height - margin.top - margin.bottom;
 const ROOT_YEAR = 2008;
 const ROOT_OFFSET = 0.846;
 const MAX_DEPTH = 18.584;
-
+const YEARS_SPAN = Math.round(MAX_DEPTH - ROOT_OFFSET);
 // === REGION MAPPING ===
 const regionMap = {
     "Wisconsin": "North America", "Pennsylvania": "North America", "Alaska": "North America",
@@ -251,7 +251,7 @@ function drawTree(newickData) {
 
         const rescaledX = event.transform.rescaleX(xScale);
         const zoomedAxis = d3.axisTop(rescaledX)
-            .tickValues(d3.range(ROOT_OFFSET, MAX_DEPTH, 1))
+            .tickValues(d3.range(0, YEARS_SPAN + 1).map(i => i + ROOT_OFFSET))
             .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
         axisG.call(zoomedAxis);
         axisG.selectAll("text").attr("font-size", "11px");
