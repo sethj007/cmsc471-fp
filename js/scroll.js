@@ -22,8 +22,20 @@ tabs.forEach(tab => {
         if (treeContainer && !treeContainer.contains(treeEl)) {
             treeEl.style.transform = "";
             treeAxisEl.style.transform = "";
+
+            // reset axis text styling back to normal
+            treeAxisEl.querySelectorAll("text").forEach(t => {
+                t.style.fontSize = "11px";
+                t.style.fontWeight = "";
+            });
+
             treeContainer.appendChild(treeAxisEl);
             treeContainer.appendChild(treeEl);
+
+            // reset d3 zoom/pan state
+            if (window.resetZoom) {
+                window.resetZoom();
+            }
         }
 
         views.forEach(v => {
@@ -54,6 +66,17 @@ tabs.forEach(tab => {
                     treeEl.style.transformOrigin = "top left";
                     treeAxisEl.style.transform = `scale(${scale})`;
                     treeAxisEl.style.transformOrigin = "top left";
+
+                    // compensate for scaled-down axis text
+                    const axisText = treeAxisEl.querySelectorAll("text");
+                    axisText.forEach(t => {
+                        t.style.fontSize = `${10 / scale}px`;
+                    });
+
+                    // reset zoom/pan before split scaling
+                    if (window.resetZoom) {
+                        window.resetZoom();
+                    }
                     const currentYear = +document.getElementById("yearSlider").value;
                     if (window.updateTree) window.updateTree(currentYear);
                 });

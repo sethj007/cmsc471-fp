@@ -239,11 +239,23 @@ function drawTree(newickData) {
 
     const zoom = d3.zoom()
         .scaleExtent([0.5, 8])
-        .on("zoom", (event) => {
-            svg.attr("transform",
-                `translate(${event.transform.x + margin.left},${event.transform.y + margin.top}) scale(${event.transform.k})`
-            );
-        });
+        .translateExtent([
+        [-200, -Infinity],
+        [width*3, Infinity]
+        ])
+        
+         .on("zoom", (event) => {
+        svg.attr("transform",
+            `translate(${event.transform.x + margin.left},${event.transform.y + margin.top}) scale(${event.transform.k})`
+        );
+
+        const rescaledX = event.transform.rescaleX(xScale);
+        const zoomedAxis = d3.axisTop(rescaledX)
+            .tickValues(d3.range(ROOT_OFFSET, MAX_DEPTH, 1))
+            .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
+        axisG.call(zoomedAxis);
+        axisG.selectAll("text").attr("font-size", "11px");
+    });
 
     svgRoot.call(zoom);
 
@@ -338,8 +350,12 @@ function drawTree(newickData) {
     const xAxisTop = d3.axisTop(xScale)
         .tickValues(d3.range(ROOT_OFFSET, MAX_DEPTH, 1))
         .tickFormat(d => Math.round(ROOT_YEAR + (d - ROOT_OFFSET)));
-    axisSvg.append("g").attr("transform", `translate(${margin.left}, 35)`).call(xAxisTop)
-        .selectAll("text").attr("font-size", "11px");
+
+
+    const axisG = axisSvg.append("g")
+        .attr("transform", `translate(${margin.left}, 35)`)
+        .call(xAxisTop);
+    axisG.selectAll("text").attr("font-size", "11px");
 
     function applyFilters(transition = true) {
         const t = transition ? d3.transition().duration(400).ease(d3.easeCubicInOut) : null;
