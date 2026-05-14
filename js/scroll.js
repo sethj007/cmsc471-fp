@@ -216,7 +216,7 @@ let playing = false;
 let playInterval = null;
 
 function startPlay() {
-    const baseInterval = 600;
+    const baseInterval = 800;
     playInterval = setInterval(() => {
         let year = +yearSlider.value
         if (year >= 2026) {
