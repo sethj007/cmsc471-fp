@@ -300,7 +300,7 @@ Promise.all([
                     .attr("fill", d => {
                         const iso3 = mapData.idToISO3[+d.id];
                         const val = mapData.byCountryYear[`${iso3}-${year}`] || 0;
-                        return val > 0 ? colorScale(val) : "#c0c0c0";
+                        return val > 0 ? colorScale(val) : "#666";
                     });
             }
         });
