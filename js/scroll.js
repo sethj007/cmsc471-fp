@@ -214,7 +214,6 @@ let playing = false;
 let playInterval = null;
 
 function startPlay() {
-    const baseInterval = 800;
     playInterval = setInterval(() => {
         let year = +yearSlider.value;
         if (year >= 2026) {
@@ -227,7 +226,7 @@ function startPlay() {
         yearSlider.value = year;
         document.getElementById("yearLabel").textContent = year;
         if (window.updateYear) window.updateYear(year);
-    }, baseInterval/playSpeed);
+    }, 600);
 }
 
 playBtn.addEventListener("click", () => {
