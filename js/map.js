@@ -202,7 +202,7 @@ Promise.all([
         mapData.svg.selectAll(".bubble").remove();
         mapData.svg.selectAll(".country")
             .attr("fill", "none")
-            .attr("stroke", "#ddd")
+            .attr("stroke", "#666")
             .attr("stroke-width", 0.3)
             .style("pointer-events", "none");
 
