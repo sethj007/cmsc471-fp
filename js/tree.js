@@ -238,10 +238,10 @@ function drawTree(newickData) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const zoom = d3.zoom()
-        .scaleExtent([0.3, 8])
+        .scaleExtent([0.25, 8])
         .translateExtent([
-        [-200, -Infinity],
-        [width*3, Infinity]
+        [-width/2, -height],
+        [width*4.5, height*3]
         ])
         
          .on("zoom", (event) => {
